@@ -149,7 +149,7 @@ try {
             $app = aep_app();
             $sleep = max(2, (int) ($opts['sleep'] ?? 10));
             aep_out('Worker loop started (sleep ' . $sleep . 's). Press Ctrl+C to stop.');
-            while (true) {
+            for (;;) {
                 $result = (new Worker($app))->run();
                 if (($result['stages'] ?? 0) === 0) {
                     sleep($sleep);

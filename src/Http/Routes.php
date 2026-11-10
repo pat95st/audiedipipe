@@ -81,7 +81,7 @@ final class Routes
 
         // Effect previews with an own test file
         $r->post('/preview/upload', PreviewController::class, 'upload', true, ['jobs.upload', 'pipelines.manage']);
-        $r->post('/preview/render', PreviewController::class, 'render', true, ['jobs.upload', 'pipelines.manage']);
+        $r->post('/preview/render', PreviewController::class, 'renderPreview', true, ['jobs.upload', 'pipelines.manage']);
         $r->get('/preview/{token}/{file}', PreviewController::class, 'file', true, ['jobs.upload', 'pipelines.manage']);
 
         // Storage connections / sources

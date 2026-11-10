@@ -34,7 +34,7 @@ final class PreviewController extends Controller
         ]);
     }
 
-    public function render(): Response
+    public function renderPreview(): Response
     {
         $data = $this->request->json();
         $chain = is_array($data['chain'] ?? null) ? array_values(array_filter($data['chain'], 'is_array')) : [];
