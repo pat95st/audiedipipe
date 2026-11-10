@@ -10,24 +10,15 @@ $o = static fn (string $key, string $default = '') => $v->e($old[$key] ?? $defau
 <?php endif; ?>
 
 <h2 class="h6 text-uppercase text-body-secondary mt-4"><?= $v->te('install.requirements') ?></h2>
-<ul class="list-group mb-4 aep-checklist">
-    <?php foreach ($checks as $check): ?>
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span>
-                <?php if ($check['ok']): ?>
-                    <i class="bi bi-check-circle-fill text-success me-2"></i>
-                <?php elseif ($check['required']): ?>
-                    <i class="bi bi-x-circle-fill text-danger me-2"></i>
-                <?php else: ?>
-                    <i class="bi bi-dash-circle text-warning me-2"></i>
-                <?php endif; ?>
-                <?= $v->te('install.check.' . $check['key']) ?>
-                <?php if (!$check['required']): ?><span class="badge text-bg-secondary ms-1"><?= $v->te('common.optional') ?></span><?php endif; ?>
-            </span>
-            <small class="text-body-secondary text-truncate ms-2" style="max-width: 50%"><?= $v->e($check['detail']) ?></small>
-        </li>
-    <?php endforeach; ?>
+<ul class="list-group mb-2 aep-checklist" id="aep-install-checks" data-check-url="<?= $v->url('/install/check') ?>" aria-live="polite">
+    <?= $v->partial('install/_checks', ['checks' => $checks]) ?>
 </ul>
+<div class="d-flex justify-content-end mb-4">
+    <button class="btn btn-outline-secondary btn-sm" type="button" id="aep-install-recheck">
+        <span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+        <i class="bi bi-arrow-repeat me-1"></i><?= $v->te('install.recheck') ?>
+    </button>
+</div>
 
 <form method="post" action="<?= $v->url('/install') ?>" class="vstack gap-4">
     <?= $v->csrfField() ?>
@@ -53,12 +44,13 @@ $o = static fn (string $key, string $default = '') => $v->e($old[$key] ?? $defau
             </div>
             <div class="col-md-6">
                 <label class="form-label" for="ffmpeg"><?= $v->te('install.ffmpeg_path') ?></label>
-                <input class="form-control font-monospace" id="ffmpeg" name="ffmpeg" value="<?= $o('ffmpeg', 'ffmpeg') ?>">
+                <input class="form-control font-monospace" id="ffmpeg" name="ffmpeg" value="<?= $o('ffmpeg', 'ffmpeg') ?>" data-install-binary autocomplete="off" spellcheck="false">
             </div>
             <div class="col-md-6">
                 <label class="form-label" for="ffprobe"><?= $v->te('install.ffprobe_path') ?></label>
-                <input class="form-control font-monospace" id="ffprobe" name="ffprobe" value="<?= $o('ffprobe', 'ffprobe') ?>">
+                <input class="form-control font-monospace" id="ffprobe" name="ffprobe" value="<?= $o('ffprobe', 'ffprobe') ?>" data-install-binary autocomplete="off" spellcheck="false">
             </div>
+            <div class="col-12 form-text mt-1"><?= $v->te('install.binary_path_hint') ?></div>
             <div class="col-12">
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" role="switch" id="pseudo_cron" name="pseudo_cron" value="1" checked>
@@ -123,10 +115,9 @@ $o = static fn (string $key, string $default = '') => $v->e($old[$key] ?? $defau
         </div>
     </fieldset>
 
-    <button class="btn btn-primary btn-lg" type="submit"<?= $ok ? '' : ' disabled' ?>>
+    <button class="btn btn-primary btn-lg" type="submit" id="aep-install-submit"<?= $ok ? '' : ' disabled' ?>>
         <i class="bi bi-rocket-takeoff me-1"></i><?= $v->te('install.submit') ?>
     </button>
-    <?php if (!$ok): ?>
-        <div class="alert alert-warning mb-0"><?= $v->te('install.fix_requirements') ?></div>
-    <?php endif; ?>
+    <div class="alert alert-warning mb-0<?= $ok ? ' d-none' : '' ?>" id="aep-install-warning"><?= $v->te('install.fix_requirements') ?></div>
 </form>
+<script src="<?= $v->asset('js/install.js') ?>"></script>

@@ -24,9 +24,15 @@ class ProcessRunner
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
         ];
-        $process = proc_open($command, $descriptors, $pipes, null, $env);
+        // PHP >= 8.3 emits a warning when the binary cannot be spawned (missing,
+        // not executable). Report that as a failed result instead, so it never
+        // leaks into HTML/JSON output on hosts with display_errors enabled.
+        error_clear_last();
+        $process = @proc_open($command, $descriptors, $pipes, null, $env);
         if (!is_resource($process)) {
-            return new ProcessResult(127, '', 'Unable to start process: ' . ($command[0] ?? ''));
+            $reason = error_get_last()['message'] ?? '';
+
+            return new ProcessResult(127, '', trim('Unable to start process: ' . ($command[0] ?? '') . ' ' . $reason));
         }
         if ($stdin !== null) {
             fwrite($pipes[0], $stdin);
@@ -104,11 +110,19 @@ class ProcessRunner
         if (!function_exists('exec')) {
             return new ProcessResult(127, '', 'Neither proc_open nor exec are available on this host.');
         }
-        $line = implode(' ', array_map('escapeshellarg', $command)) . ' 2>&1';
+        // Keep stdout and stderr apart (callers parse stdout, e.g. ffprobe JSON).
+        $errorFile = tempnam(sys_get_temp_dir(), 'aep_err_');
+        $line = implode(' ', array_map('escapeshellarg', $command));
+        $line .= $errorFile !== false ? ' 2>' . escapeshellarg($errorFile) : ' 2>/dev/null';
         $output = [];
         $code = 0;
         exec($line, $output, $code);
+        $stderr = '';
+        if ($errorFile !== false) {
+            $stderr = (string) @file_get_contents($errorFile);
+            @unlink($errorFile);
+        }
 
-        return new ProcessResult($code, '', implode("\n", $output));
+        return new ProcessResult($code, implode("\n", $output), $stderr);
     }
 }

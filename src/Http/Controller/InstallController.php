@@ -17,14 +17,20 @@ final class InstallController extends Controller
     public function show(): Response
     {
         $installer = new Installer($this->app->root);
-        $checks = $installer->requirements((string) ($this->session->get('install_ffmpeg') ?: 'ffmpeg'));
+        [$ffmpeg, $ffprobe] = $this->binaryPaths([
+            'ffmpeg' => $this->session->get('install_ffmpeg'),
+            'ffprobe' => $this->session->get('install_ffprobe'),
+        ]);
+        $checks = $installer->requirements($ffmpeg, $ffprobe);
         $old = $this->session->get('install_old', []);
+        $old = is_array($old) ? $old : [];
+        $old += ['ffmpeg' => $ffmpeg, 'ffprobe' => $ffprobe];
 
         return Response::html($this->view->render('install/index', [
             'title' => $this->view->t('install.title'),
             'checks' => $checks,
             'ok' => Installer::requirementsMet($checks),
-            'old' => is_array($old) ? $old : [],
+            'old' => $old,
             'error' => (string) $this->session->get('install_error', ''),
             'defaultUrl' => $this->request->origin() . rtrim(dirname((string) ($this->request->server['SCRIPT_NAME'] ?? '/index.php')), '/'),
             'languages' => $this->app->get(Translator::class)->available(),
@@ -32,11 +38,25 @@ final class InstallController extends Controller
         ], 'layout_guest'));
     }
 
+    /**
+     * Re-runs the requirements check with the binary paths currently entered
+     * in the form (called live by assets/js/install.js).
+     */
     public function check(): Response
     {
-        $installer = new Installer($this->app->root);
+        [$ffmpeg, $ffprobe] = $this->binaryPaths([
+            'ffmpeg' => $this->request->string('ffmpeg'),
+            'ffprobe' => $this->request->string('ffprobe'),
+        ]);
+        $this->session->set('install_ffmpeg', $ffmpeg);
+        $this->session->set('install_ffprobe', $ffprobe);
+        $checks = (new Installer($this->app->root))->requirements($ffmpeg, $ffprobe);
 
-        return Response::json($installer->requirements($this->request->string('ffmpeg', 'ffmpeg')));
+        return Response::json([
+            'ok' => Installer::requirementsMet($checks),
+            'checks' => $checks,
+            'html' => $this->view->partial('install/_checks', ['checks' => $checks]),
+        ]);
     }
 
     public function install(): Response
@@ -46,15 +66,23 @@ final class InstallController extends Controller
         $old = $input;
         unset($old['db_password'], $old['admin_password'], $old['admin_password_confirm']);
         $this->session->set('install_old', $old);
-        $this->session->set('install_ffmpeg', (string) ($input['ffmpeg'] ?? 'ffmpeg'));
+        [$ffmpeg, $ffprobe] = $this->binaryPaths($input);
+        $input['ffmpeg'] = $ffmpeg;
+        $input['ffprobe'] = $ffprobe;
+        $this->session->set('install_ffmpeg', $ffmpeg);
+        $this->session->set('install_ffprobe', $ffprobe);
         try {
+            $installer = new Installer($this->app->root);
+            if (!Installer::requirementsMet($installer->requirements($ffmpeg, $ffprobe))) {
+                throw new \InvalidArgumentException($this->view->t('install.fix_requirements'));
+            }
             if (($input['admin_password'] ?? '') !== ($input['admin_password_confirm'] ?? '')) {
                 throw new \InvalidArgumentException($this->view->t('account.error.password_mismatch'));
             }
             if (($input['db_driver'] ?? '') === 'sqlite') {
                 throw new \InvalidArgumentException('SQLite is only supported for tests.');
             }
-            (new Installer($this->app->root))->install($input);
+            $installer->install($input);
         } catch (Throwable $e) {
             $message = $e->getMessage();
             if ($e instanceof \AudiEdiPipe\Application\ValidationException) {
@@ -66,8 +94,27 @@ final class InstallController extends Controller
         }
         $this->session->remove('install_old');
         $this->session->remove('install_error');
+        $this->session->remove('install_ffmpeg');
+        $this->session->remove('install_ffprobe');
         $this->session->flash('success', $this->view->t('install.done'));
 
         return $this->redirect('/login');
+    }
+
+    /**
+     * @param array<string, mixed> $source
+     *
+     * @return array{0: string, 1: string} ffmpeg and ffprobe path, defaulting to the PATH lookup
+     */
+    private function binaryPaths(array $source): array
+    {
+        $paths = [];
+        foreach (['ffmpeg', 'ffprobe'] as $key) {
+            $value = $source[$key] ?? '';
+            $value = is_scalar($value) ? trim((string) $value) : '';
+            $paths[] = $value !== '' ? $value : $key;
+        }
+
+        return [$paths[0], $paths[1]];
     }
 }

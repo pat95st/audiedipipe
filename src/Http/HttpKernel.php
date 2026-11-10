@@ -7,6 +7,7 @@ namespace AudiEdiPipe\Http;
 use AudiEdiPipe\Application\Auth\AuthService;
 use AudiEdiPipe\Application\ValidationException;
 use AudiEdiPipe\Domain\User\Role;
+use AudiEdiPipe\Http\Controller\AssetController;
 use AudiEdiPipe\Http\Controller\Controller;
 use AudiEdiPipe\Http\Controller\InstallController;
 use AudiEdiPipe\Infrastructure\I18n\Translator;
@@ -59,7 +60,7 @@ final class HttpKernel
                 return Response::redirect($view->url('/install'));
             }
             if ($request->path === '/theme.css') {
-                return Response::text(Controller\AssetController::css('#e8590c', '#1c7ed6'), 200, 'text/css; charset=utf-8');
+                return Response::text(AssetController::css('#e8590c', '#1c7ed6'), 200, 'text/css; charset=utf-8');
             }
             if (str_starts_with($request->path, '/assets/') || $request->path === '/manifest.webmanifest') {
                 return Response::notFound();

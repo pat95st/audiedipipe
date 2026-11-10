@@ -21,18 +21,20 @@ use RuntimeException;
  */
 final class Installer
 {
-    public function __construct(private readonly string $root)
-    {
+    public function __construct(
+        private readonly string $root,
+        private readonly ProcessRunner $runner = new ProcessRunner(),
+    ) {
     }
 
     /**
-     * @return list<array{key: string, ok: bool, required: bool, detail: string}>
+     * @return list<array{key: string, ok: bool, required: bool, detail: string, hint: string}>
      */
-    public function requirements(string $ffmpeg = 'ffmpeg'): array
+    public function requirements(string $ffmpeg = 'ffmpeg', string $ffprobe = 'ffprobe'): array
     {
         $checks = [];
-        $add = static function (string $key, bool $ok, bool $required, string $detail = '') use (&$checks): void {
-            $checks[] = ['key' => $key, 'ok' => $ok, 'required' => $required, 'detail' => $detail];
+        $add = static function (string $key, bool $ok, bool $required, string $detail = '', string $hint = '') use (&$checks): void {
+            $checks[] = ['key' => $key, 'ok' => $ok, 'required' => $required, 'detail' => $detail, 'hint' => $hint];
         };
         $add('php', version_compare(PHP_VERSION, '8.2.0', '>='), true, PHP_VERSION);
         foreach (['pdo', 'mbstring', 'json', 'openssl', 'sodium', 'curl', 'dom'] as $ext) {
@@ -43,7 +45,8 @@ final class Installer
         foreach (['ftp', 'ssh2', 'gd', 'intl'] as $ext) {
             $add('ext_' . $ext, extension_loaded($ext), false);
         }
-        $add('proc_open', function_exists('proc_open') || function_exists('exec'), true);
+        $canRunProcesses = function_exists('proc_open') || function_exists('exec');
+        $add('proc_open', $canRunProcesses, true);
         foreach (['config', 'storage', 'public/uploads'] as $dir) {
             $path = $this->root . '/' . $dir;
             if (!is_dir($path)) {
@@ -51,20 +54,59 @@ final class Installer
             }
             $add('writable_' . str_replace('/', '_', $dir), is_dir($path) && is_writable($path), true, $dir);
         }
-        $version = null;
-        if (function_exists('proc_open')) {
-            $result = (new ProcessRunner())->run([$ffmpeg, '-hide_banner', '-version'], 15);
-            if ($result->successful()) {
-                $version = trim((string) strtok($result->stdout, "\n"));
-            }
+        foreach (['ffmpeg' => $ffmpeg, 'ffprobe' => $ffprobe] as $key => $binary) {
+            $probe = $this->probeBinary($binary, $canRunProcesses);
+            $add($key, $probe['ok'], true, $probe['detail'], $probe['hint']);
         }
-        $add('ffmpeg', $version !== null, true, $version ?? $ffmpeg);
 
         return $checks;
     }
 
     /**
-     * @param list<array{key: string, ok: bool, required: bool, detail: string}> $checks
+     * Runs "<binary> -version" and, if that fails, works out why, so the
+     * installer can tell the user what to fix (wrong path, directory given,
+     * missing execute permission after an FTP upload, ...).
+     *
+     * @return array{ok: bool, detail: string, hint: string} hint is a translation key ('' when ok)
+     */
+    public function probeBinary(string $binary, bool $canRunProcesses = true): array
+    {
+        $binary = trim($binary);
+        if ($binary === '') {
+            return ['ok' => false, 'detail' => '', 'hint' => 'install.hint.binary_empty'];
+        }
+        if (!$canRunProcesses) {
+            return ['ok' => false, 'detail' => $binary, 'hint' => 'install.hint.no_process'];
+        }
+
+        $result = $this->runner->run([$binary, '-hide_banner', '-version'], 15);
+        $output = trim($result->stdout) !== '' ? $result->stdout : $result->stderr;
+        $firstLine = trim((string) strtok(trim($output), "\n"));
+        if ($result->successful() && stripos($firstLine, 'version') !== false) {
+            return ['ok' => true, 'detail' => $firstLine, 'hint' => ''];
+        }
+
+        $isPath = str_contains($binary, '/') || str_contains($binary, '\\');
+        $hint = 'install.hint.binary_failed';
+        if ($isPath && @is_dir($binary)) {
+            $hint = 'install.hint.binary_is_directory';
+        } elseif ($isPath && !@is_file($binary)) {
+            $hint = 'install.hint.binary_not_found';
+        } elseif ($isPath && !@is_executable($binary)) {
+            $hint = 'install.hint.binary_not_executable';
+        } elseif (!$isPath && in_array($result->exitCode, [127, -1], true)) {
+            $hint = 'install.hint.binary_not_on_path';
+        }
+        $detail = $binary;
+        if ($hint === 'install.hint.binary_failed' && $firstLine !== '') {
+            $detail .= ': ' . mb_substr($firstLine, 0, 200);
+        }
+
+        return ['ok' => false, 'detail' => $detail, 'hint' => $hint];
+    }
+
+    /**
+     * @param list<array{key: string, ok: bool, required: bool, detail: string, hint: string}> $checks
      */
     public static function requirementsMet(array $checks): bool
     {

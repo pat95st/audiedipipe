@@ -89,10 +89,15 @@ $command = $args[0] ?? 'help';
 try {
     switch ($command) {
         case 'check':
-            $checks = (new Installer(APP_ROOT))->requirements($opts['ffmpeg'] ?? 'ffmpeg');
+            $checks = (new Installer(APP_ROOT))->requirements($opts['ffmpeg'] ?? 'ffmpeg', $opts['ffprobe'] ?? 'ffprobe');
+            $hints = json_decode((string) @file_get_contents(APP_ROOT . '/lang/en.json'), true);
+            $hints = is_array($hints) ? $hints : [];
             foreach ($checks as $check) {
                 $mark = $check['ok'] ? "\033[32m✔\033[0m" : ($check['required'] ? "\033[31m✘\033[0m" : "\033[33m–\033[0m");
                 aep_out(sprintf(' %s %-22s %s', $mark, $check['key'], $check['detail']));
+                if (!$check['ok'] && $check['hint'] !== '') {
+                    aep_out('     -> ' . (is_string($hints[$check['hint']] ?? null) ? $hints[$check['hint']] : $check['hint']));
+                }
             }
             exit(Installer::requirementsMet($checks) ? 0 : 1);
 
@@ -204,7 +209,7 @@ try {
             aep_out();
             aep_out('Usage: php bin/console <command> [options]');
             aep_out();
-            aep_out('  check                       Check system requirements');
+            aep_out('  check                       Check system requirements [--ffmpeg=PATH --ffprobe=PATH]');
             aep_out('  install                     Install (interactive or with --db-driver=… --admin-password=… --no-interaction)');
             aep_out('  migrate                     Apply database migrations');
             aep_out('  cron | worker:run           Run one worker cycle (scan sources, process stages). Call every minute.');
