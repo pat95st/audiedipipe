@@ -1,0 +1,14 @@
+# Fallback for webspaces where the document root cannot be set to /public:
+# route everything into the public directory and protect the application files.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(config|src|storage|migrations|templates|tests|bin|lang|vendor|docs)(/|$) - [F,L]
+    RewriteRule ^(composer\.(json|lock)|phpunit\.xml(\.dist)?|phpstan\.neon(\.dist)?|\.git.*)$ - [F,L]
+    RewriteCond %{REQUEST_URI} !/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>

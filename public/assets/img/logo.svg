@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="audiEdiPipe">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff7a2f"/>
+      <stop offset="1" stop-color="#d9480f"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#1b1f25"/>
+  <rect x="3" y="3" width="58" height="58" rx="11" fill="none" stroke="url(#g)" stroke-width="2"/>
+  <!-- pipeline: three stages connected -->
+  <path d="M14 46h36" stroke="#495057" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="16" cy="46" r="5" fill="#37d67a"/>
+  <circle cx="32" cy="46" r="5" fill="#37d67a"/>
+  <circle cx="48" cy="46" r="5" fill="#ffb020"/>
+  <!-- waveform -->
+  <g stroke="url(#g)" stroke-width="3.2" stroke-linecap="round">
+    <path d="M14 26v4"/><path d="M20 20v16"/><path d="M26 14v28"/><path d="M32 22v12"/><path d="M38 17v22"/><path d="M44 23v10"/><path d="M50 26v4"/>
+  </g>
+</svg>

@@ -1,0 +1,39 @@
+# audiEdiPipe – Apache configuration (works on most shared webspaces)
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Uncomment and adjust if the app lives in a sub directory and rewriting fails:
+    # RewriteBase /audio/
+
+    # Send Authorization header to PHP (some FastCGI setups drop it)
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "^sw\.js$">
+        Header set Service-Worker-Allowed "/"
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+    <FilesMatch "\.(css|js|woff2?|svg|png)$">
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType font/woff2 .woff2
+</IfModule>
+
+# Never execute uploaded files
+<IfModule mod_php.c>
+    <If "%{REQUEST_URI} =~ m#/uploads/#">
+        php_flag engine off
+    </If>
+</IfModule>

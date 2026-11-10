@@ -1,0 +1,59 @@
+{
+    "name": "pat95st/audiedipipe",
+    "description": "audiEdiPipe - pipeline based audio editor with automated processing, podcast publishing and a web UI",
+    "type": "project",
+    "license": "proprietary",
+    "keywords": ["audio", "podcast", "pipeline", "ffmpeg", "cqrs"],
+    "require": {
+        "php": ">=8.2",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-openssl": "*",
+        "ext-pdo": "*",
+        "ext-sodium": "*",
+        "ext-curl": "*",
+        "ext-dom": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "friendsofphp/php-cs-fixer": "^3.64"
+    },
+    "suggest": {
+        "ext-ftp": "FTP/FTPS storage adapter",
+        "ext-ssh2": "SFTP/SCP storage adapters",
+        "phpseclib/phpseclib": "Pure PHP SFTP fallback when ext-ssh2 is not available (webspace)",
+        "ext-pdo_mysql": "MariaDB/MySQL database",
+        "ext-pdo_pgsql": "PostgreSQL database",
+        "ext-pdo_sqlite": "SQLite (tests only)",
+        "ext-gd": "Logo/icon processing",
+        "ext-intl": "Better locale detection"
+    },
+    "autoload": {
+        "psr-4": {
+            "AudiEdiPipe\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AudiEdiPipe\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix",
+        "stan": "phpstan analyse --memory-limit=1G",
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite unit",
+        "test:database": "phpunit --testsuite database",
+        "test:integration": "phpunit --testsuite integration",
+        "test:acceptance": "phpunit --testsuite acceptance",
+        "check": ["@cs", "@stan", "@test"]
+    },
+    "config": {
+        "sort-packages": true,
+        "platform-check": false
+    },
+    "minimum-stability": "stable"
+}

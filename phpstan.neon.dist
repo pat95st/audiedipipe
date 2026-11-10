@@ -1,0 +1,17 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - bin/console
+        - public/index.php
+    bootstrapFiles:
+        - src/bootstrap.php
+    tmpDir: storage/cache/phpstan
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        # Optional extensions / libraries that are not installed in every environment
+        - identifier: function.notFound
+          message: '#^Function ssh2_#'
+        - identifier: class.notFound
+          message: '#phpseclib3#'

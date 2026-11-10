@@ -1,0 +1,221 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * audiEdiPipe command line interface.
+ *
+ *   php bin/console help
+ */
+
+use AudiEdiPipe\Application\Source\SourceScanner;
+use AudiEdiPipe\Application\User\Command\CreateUser;
+use AudiEdiPipe\Application\User\UserCommandHandler;
+use AudiEdiPipe\Cqrs\CommandBus;
+use AudiEdiPipe\Infrastructure\Persistence\Database;
+use AudiEdiPipe\Infrastructure\Persistence\Migrator;
+use AudiEdiPipe\Kernel\App;
+use AudiEdiPipe\Kernel\Installer;
+use AudiEdiPipe\Kernel\Worker;
+
+if (PHP_SAPI !== 'cli') {
+    exit(1);
+}
+
+define('APP_ROOT', dirname(__DIR__));
+require APP_ROOT . '/src/bootstrap.php';
+
+/**
+ * @param list<string> $argv
+ *
+ * @return array{0: list<string>, 1: array<string, string>}
+ */
+function aep_parse_args(array $argv): array
+{
+    $positional = [];
+    $options = [];
+    foreach ($argv as $arg) {
+        if (preg_match('/^--([a-z0-9_-]+)(?:=(.*))?$/i', $arg, $m) === 1) {
+            $options[str_replace('-', '_', $m[1])] = $m[2] ?? '1';
+        } else {
+            $positional[] = $arg;
+        }
+    }
+
+    return [$positional, $options];
+}
+
+function aep_out(string $line = ''): void
+{
+    fwrite(STDOUT, $line . PHP_EOL);
+}
+
+function aep_err(string $line): void
+{
+    fwrite(STDERR, "\033[31m" . $line . "\033[0m" . PHP_EOL);
+}
+
+function aep_ask(string $question, string $default = '', bool $secret = false): string
+{
+    $suffix = $default !== '' ? " [{$default}]" : '';
+    fwrite(STDOUT, $question . $suffix . ': ');
+    if ($secret && DIRECTORY_SEPARATOR === '/' && stream_isatty(STDIN)) {
+        shell_exec('stty -echo');
+        $answer = trim((string) fgets(STDIN));
+        shell_exec('stty echo');
+        fwrite(STDOUT, PHP_EOL);
+    } else {
+        $answer = trim((string) fgets(STDIN));
+    }
+
+    return $answer === '' ? $default : $answer;
+}
+
+function aep_app(): App
+{
+    $app = App::fromConfigFile();
+    if ($app->config->isEmpty()) {
+        aep_err('Not installed: config/config.php is missing. Run "php bin/console install" first.');
+        exit(1);
+    }
+
+    return $app;
+}
+
+[$args, $opts] = aep_parse_args(array_slice($argv, 1));
+$command = $args[0] ?? 'help';
+
+try {
+    switch ($command) {
+        case 'check':
+            $checks = (new Installer(APP_ROOT))->requirements($opts['ffmpeg'] ?? 'ffmpeg');
+            foreach ($checks as $check) {
+                $mark = $check['ok'] ? "\033[32m✔\033[0m" : ($check['required'] ? "\033[31m✘\033[0m" : "\033[33m–\033[0m");
+                aep_out(sprintf(' %s %-22s %s', $mark, $check['key'], $check['detail']));
+            }
+            exit(Installer::requirementsMet($checks) ? 0 : 1);
+
+        case 'install':
+            $interactive = !isset($opts['no_interaction']);
+            $driver = $opts['db_driver'] ?? ($interactive ? aep_ask('Database driver (mysql|pgsql)', 'mysql') : 'mysql');
+            $input = [
+                'db_driver' => $driver,
+                'db_host' => $opts['db_host'] ?? ($interactive && $driver !== 'sqlite' ? aep_ask('Database host', '127.0.0.1') : '127.0.0.1'),
+                'db_port' => $opts['db_port'] ?? ($interactive && $driver !== 'sqlite' ? aep_ask('Database port', $driver === 'pgsql' ? '5432' : '3306') : ($driver === 'pgsql' ? '5432' : '3306')),
+                'db_name' => $opts['db_name'] ?? ($interactive && $driver !== 'sqlite' ? aep_ask('Database name', 'audiedipipe') : 'audiedipipe'),
+                'db_user' => $opts['db_user'] ?? ($interactive && $driver !== 'sqlite' ? aep_ask('Database user', 'audiedipipe') : 'audiedipipe'),
+                'db_password' => $opts['db_password'] ?? ($interactive && $driver !== 'sqlite' ? aep_ask('Database password', '', true) : ''),
+                'db_path' => $opts['db_path'] ?? APP_ROOT . '/storage/database.sqlite',
+                'app_url' => $opts['app_url'] ?? ($interactive ? aep_ask('Public URL', 'http://localhost:8080') : 'http://localhost:8080'),
+                'app_name' => $opts['app_name'] ?? 'audiEdiPipe',
+                'locale' => $opts['locale'] ?? ($interactive ? aep_ask('Default language (en|de)', 'en') : 'en'),
+                'admin_username' => $opts['admin_username'] ?? ($interactive ? aep_ask('Admin username', 'admin') : 'admin'),
+                'admin_email' => $opts['admin_email'] ?? ($interactive ? aep_ask('Admin e-mail') : ''),
+                'admin_password' => $opts['admin_password'] ?? ($interactive ? aep_ask('Admin password (min. 10 characters)', '', true) : ''),
+                'ffmpeg' => $opts['ffmpeg'] ?? 'ffmpeg',
+                'ffprobe' => $opts['ffprobe'] ?? 'ffprobe',
+                'pseudo_cron' => ($opts['pseudo_cron'] ?? '0') === '1',
+            ];
+            $config = (new Installer(APP_ROOT))->install($input);
+            aep_out("\033[32mInstallation complete.\033[0m");
+            aep_out('Add this cron job to process files automatically:');
+            aep_out('  * * * * * php ' . APP_ROOT . '/bin/console cron >/dev/null 2>&1');
+            aep_out('Web cron URL (alternative): ' . $config['app']['url'] . '/cron?token=' . $config['worker']['cron_token']);
+            exit(0);
+
+        case 'migrate':
+            $app = aep_app();
+            $applied = $app->get(Migrator::class)->migrate();
+            aep_out($applied === [] ? 'Database is up to date.' : 'Applied: ' . implode(', ', $applied));
+            exit(0);
+
+        case 'cron':
+        case 'worker:run':
+            $app = aep_app();
+            $result = (new Worker($app))->run(isset($opts['budget']) ? (int) $opts['budget'] : null);
+            if (!isset($opts['quiet'])) {
+                aep_out(json_encode($result, JSON_UNESCAPED_SLASHES) ?: '');
+            }
+            exit(0);
+
+        case 'worker:loop':
+            // Long running worker for systemd / docker. Sleeps between cycles.
+            $app = aep_app();
+            $sleep = max(2, (int) ($opts['sleep'] ?? 10));
+            aep_out('Worker loop started (sleep ' . $sleep . 's). Press Ctrl+C to stop.');
+            while (true) {
+                $result = (new Worker($app))->run();
+                if (($result['stages'] ?? 0) === 0) {
+                    sleep($sleep);
+                }
+                // Recreate the app to release memory and pick up config changes.
+                $app = App::fromConfigFile();
+            }
+
+        case 'source:scan':
+            $app = aep_app();
+            $results = $app->get(SourceScanner::class)->scanDue(true, isset($args[1]) ? (int) $args[1] : null);
+            foreach ($results as $id => $result) {
+                aep_out(sprintf('Source #%d: %d imported%s', $id, $result['imported'], $result['error'] !== null ? ' – ERROR: ' . $result['error'] : ''));
+            }
+            exit(0);
+
+        case 'user:create':
+            $app = aep_app();
+            $id = $app->get(CommandBus::class)->dispatch(new CreateUser(
+                $opts['username'] ?? aep_ask('Username'),
+                $opts['email'] ?? aep_ask('E-mail'),
+                $opts['password'] ?? aep_ask('Password', '', true),
+                $opts['role'] ?? aep_ask('Role (admin|cutter|reviewer)', 'cutter'),
+                $opts['name'] ?? null,
+            ));
+            aep_out('Created user #' . (int) $id);
+            exit(0);
+
+        case 'user:reset-password':
+            $app = aep_app();
+            $username = $args[1] ?? aep_ask('Username');
+            $password = $opts['password'] ?? aep_ask('New password', '', true);
+            if (mb_strlen($password) < UserCommandHandler::MIN_PASSWORD_LENGTH) {
+                throw new InvalidArgumentException('Password must have at least ' . UserCommandHandler::MIN_PASSWORD_LENGTH . ' characters.');
+            }
+            $count = $app->get(Database::class)->execute(
+                'UPDATE users SET password_hash = ?, updated_at = ? WHERE username = ?',
+                [password_hash($password, PASSWORD_DEFAULT), Database::now(), $username],
+            );
+            aep_out($count > 0 ? 'Password updated.' : 'User not found.');
+            exit($count > 0 ? 0 : 1);
+
+        case 'user:disable-2fa':
+            $app = aep_app();
+            $username = $args[1] ?? aep_ask('Username');
+            $db = $app->get(Database::class);
+            $count = $db->execute(
+                'UPDATE users SET totp_secret = NULL, totp_enabled = ?, email_2fa_enabled = ?, updated_at = ? WHERE username = ?',
+                [false, false, Database::now(), $username],
+            );
+            aep_out($count > 0 ? 'Two-factor authentication disabled.' : 'User not found.');
+            exit($count > 0 ? 0 : 1);
+
+        case 'help':
+        default:
+            aep_out('audiEdiPipe ' . App::VERSION . ' – command line interface');
+            aep_out();
+            aep_out('Usage: php bin/console <command> [options]');
+            aep_out();
+            aep_out('  check                       Check system requirements');
+            aep_out('  install                     Install (interactive or with --db-driver=… --admin-password=… --no-interaction)');
+            aep_out('  migrate                     Apply database migrations');
+            aep_out('  cron | worker:run           Run one worker cycle (scan sources, process stages). Call every minute.');
+            aep_out('  worker:loop [--sleep=10]    Run the worker continuously (systemd)');
+            aep_out('  source:scan [id]            Scan all or one source now');
+            aep_out('  user:create                 Create a user (--username --email --password --role)');
+            aep_out('  user:reset-password <user>  Set a new password');
+            aep_out('  user:disable-2fa <user>     Disable TOTP and e-mail 2FA for a user');
+            exit($command === 'help' ? 0 : 1);
+    }
+} catch (Throwable $e) {
+    aep_err($e->getMessage());
+    exit(1);
+}
