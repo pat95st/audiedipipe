@@ -58,6 +58,7 @@ final class View
         $v = $this;
         extract($this->shared + $data, EXTR_SKIP);
         ob_start();
+
         try {
             include $file;
         } finally {

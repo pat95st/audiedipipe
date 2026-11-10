@@ -57,9 +57,11 @@ final class PublishStage implements StageHandler
             $row = $this->db->fetchOne('SELECT * FROM publish_targets WHERE id = ? AND enabled = 1', [$targetId]);
             if ($row === null) {
                 $context->log('Target #' . $targetId . ' not found or disabled - skipped.');
+
                 continue;
             }
             $row['config'] = $this->crypto->decryptFields(Json::decode($row['config']), PublisherFactory::SECRET_FIELDS);
+
             try {
                 $result = $this->publishers->create($row)->publish($episode);
                 $context->log(sprintf('%s: %s %s', (string) $row['name'], $result->message, $result->url));

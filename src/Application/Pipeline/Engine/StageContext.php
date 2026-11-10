@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AudiEdiPipe\Application\Pipeline\Engine;
 
+use RuntimeException;
+
 /**
  * Everything a stage handler needs to process one stage of one job.
  */
@@ -57,7 +59,7 @@ final class StageContext
     public function requireInput(): string
     {
         if ($this->inputFile === null || !is_file($this->inputFile)) {
-            throw new \RuntimeException('Input file of the previous stage is missing.');
+            throw new RuntimeException('Input file of the previous stage is missing.');
         }
 
         return $this->inputFile;

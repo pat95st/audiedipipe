@@ -16,7 +16,7 @@ final class Request
      * @param array<string, mixed>  $query
      * @param array<string, mixed>  $post
      * @param array<string, mixed>  $files
-     * @param array<string, string> $headers  lower-case header names
+     * @param array<string, string> $headers lower-case header names
      * @param array<string, mixed>  $server
      */
     public function __construct(
@@ -65,10 +65,13 @@ final class Request
 
         /** @var array<string, mixed> $query */
         $query = $_GET;
+
         /** @var array<string, mixed> $post */
         $post = $_POST;
+
         /** @var array<string, mixed> $files */
         $files = $_FILES;
+
         /** @var array<string, mixed> $server */
         $server = $_SERVER;
 

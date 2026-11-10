@@ -11,6 +11,7 @@ use AudiEdiPipe\Infrastructure\Persistence\Database;
 use AudiEdiPipe\Infrastructure\Storage\FileFilter;
 use AudiEdiPipe\Infrastructure\Storage\StorageConnections;
 use AudiEdiPipe\Infrastructure\Support\Json;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -61,9 +62,10 @@ final class SourceScanner
         $pipelines = $this->db->fetchAll('SELECT id FROM pipelines WHERE source_id = ? AND enabled = 1', [$sourceId]);
         $imported = 0;
         $error = null;
+
         try {
             if ($pipelines === []) {
-                throw new \RuntimeException('No enabled pipeline uses this source.');
+                throw new RuntimeException('No enabled pipeline uses this source.');
             }
             $adapter = $this->connections->fromConfig((string) $source['type'], Json::decode($source['config']));
             $filterConfig = Json::decode($source['filter']);
@@ -80,7 +82,7 @@ final class SourceScanner
                 }
                 $dir = $this->uploadDirectory . '/source_' . $sourceId;
                 if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
-                    throw new \RuntimeException('Cannot create upload directory.');
+                    throw new RuntimeException('Cannot create upload directory.');
                 }
                 $local = $dir . '/' . gmdate('Ymd_His') . '_' . substr($fingerprint, 0, 8) . '_' . self::safe($file->name());
                 $adapter->download($file->path, $local);

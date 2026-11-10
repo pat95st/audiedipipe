@@ -23,7 +23,8 @@ return static function (Migrator $m): void {
             ->datetime('last_login_at')
             ->timestamps()
             ->unique(['username'])
-            ->unique(['email']);
+            ->unique(['email'])
+        ;
     });
 
     $m->create('passkeys', static function (Table $t): void {
@@ -36,7 +37,8 @@ return static function (Migrator $m): void {
             ->datetime('last_used_at')
             ->datetime('created_at', false)
             ->index(['user_id'])
-            ->foreign('user_id', 'users');
+            ->foreign('user_id', 'users')
+        ;
     });
 
     $m->create('auth_codes', static function (Table $t): void {
@@ -49,21 +51,24 @@ return static function (Migrator $m): void {
             ->datetime('used_at')
             ->datetime('created_at', false)
             ->index(['user_id', 'purpose'])
-            ->foreign('user_id', 'users');
+            ->foreign('user_id', 'users')
+        ;
     });
 
     $m->create('login_attempts', static function (Table $t): void {
         $t->id()
             ->string('identifier', 190)
             ->datetime('attempted_at', false)
-            ->index(['identifier', 'attempted_at']);
+            ->index(['identifier', 'attempted_at'])
+        ;
     });
 
     $m->create('settings', static function (Table $t): void {
         $t->id()
             ->string('name', 100)
             ->text('value')
-            ->unique(['name']);
+            ->unique(['name'])
+        ;
     });
 
     $m->create('sources', static function (Table $t): void {
@@ -78,14 +83,16 @@ return static function (Migrator $m): void {
             ->boolean('enabled', true)
             ->datetime('last_scan_at')
             ->text('last_error')
-            ->timestamps();
+            ->timestamps()
+        ;
     });
 
     $m->create('metadata_templates', static function (Table $t): void {
         $t->id()
             ->string('name', 190)
             ->text('fields')
-            ->timestamps();
+            ->timestamps()
+        ;
     });
 
     $m->create('publish_targets', static function (Table $t): void {
@@ -95,7 +102,8 @@ return static function (Migrator $m): void {
             ->string('slug', 100, true)
             ->text('config')
             ->boolean('enabled', true)
-            ->timestamps();
+            ->timestamps()
+        ;
     });
 
     $m->create('pipelines', static function (Table $t): void {
@@ -110,7 +118,8 @@ return static function (Migrator $m): void {
             ->integer('created_by', true)
             ->timestamps()
             ->foreign('source_id', 'sources', 'SET NULL')
-            ->foreign('metadata_template_id', 'metadata_templates', 'SET NULL');
+            ->foreign('metadata_template_id', 'metadata_templates', 'SET NULL')
+        ;
     });
 
     $m->create('effect_presets', static function (Table $t): void {
@@ -120,7 +129,8 @@ return static function (Migrator $m): void {
             ->text('params')
             ->boolean('builtin')
             ->timestamps()
-            ->index(['effect_type']);
+            ->index(['effect_type'])
+        ;
     });
 
     $m->create('seen_files', static function (Table $t): void {
@@ -131,7 +141,8 @@ return static function (Migrator $m): void {
             ->bigInteger('size', false, 0)
             ->datetime('seen_at', false)
             ->index(['source_id', 'fingerprint'], true)
-            ->foreign('source_id', 'sources');
+            ->foreign('source_id', 'sources')
+        ;
     });
 
     $m->create('jobs', static function (Table $t): void {
@@ -154,7 +165,8 @@ return static function (Migrator $m): void {
             ->datetime('finished_at')
             ->index(['status'])
             ->index(['pipeline_id'])
-            ->foreign('pipeline_id', 'pipelines');
+            ->foreign('pipeline_id', 'pipelines')
+        ;
     });
 
     $m->create('job_stages', static function (Table $t): void {
@@ -172,7 +184,8 @@ return static function (Migrator $m): void {
             ->datetime('started_at')
             ->datetime('finished_at')
             ->index(['job_id', 'position'])
-            ->foreign('job_id', 'jobs');
+            ->foreign('job_id', 'jobs')
+        ;
     });
 
     $m->create('feed_items', static function (Table $t): void {
@@ -189,7 +202,8 @@ return static function (Migrator $m): void {
             ->string('image_url', 1000, true)
             ->datetime('published_at', false)
             ->index(['target_id', 'published_at'])
-            ->foreign('target_id', 'publish_targets');
+            ->foreign('target_id', 'publish_targets')
+        ;
     });
 
     $m->create('audit_log', static function (Table $t): void {
@@ -198,6 +212,7 @@ return static function (Migrator $m): void {
             ->string('action', 100)
             ->text('details')
             ->datetime('created_at', false)
-            ->index(['created_at']);
+            ->index(['created_at'])
+        ;
     });
 };

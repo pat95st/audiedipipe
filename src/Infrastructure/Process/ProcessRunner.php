@@ -46,7 +46,7 @@ class ProcessRunner
         $start = time();
         $timedOut = false;
         $exitCode = -1;
-        while (true) {
+        for (;;) {
             $read = [$pipes[1], $pipes[2]];
             $write = null;
             $except = null;
@@ -73,12 +73,14 @@ class ProcessRunner
                 $stdout .= (string) stream_get_contents($pipes[1]);
                 $stderr .= (string) stream_get_contents($pipes[2]);
                 $exitCode = (int) $status['exitcode'];
+
                 break;
             }
             if (time() - $start > $timeoutSeconds) {
                 proc_terminate($process, 9);
                 $timedOut = true;
                 $exitCode = 124;
+
                 break;
             }
         }

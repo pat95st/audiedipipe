@@ -20,20 +20,6 @@ final class InstallerBinaryProbeTest extends TestCase
         }
     }
 
-    private function script(string $dir, string $name, string $body, bool $executable = true): string
-    {
-        $path = $dir . '/' . $name;
-        file_put_contents($path, "#!/bin/sh\n" . $body . "\n");
-        chmod($path, $executable ? 0755 : 0644);
-
-        return $path;
-    }
-
-    private function installer(): Installer
-    {
-        return new Installer($this->tempDir('aepinst'));
-    }
-
     public function test_custom_binary_path_is_accepted(): void
     {
         $bin = $this->script($this->tempDir(), 'ffmpeg', 'echo "ffmpeg version 99.0-fake Copyright (c) test"');
@@ -112,5 +98,19 @@ final class InstallerBinaryProbeTest extends TestCase
         foreach ($checks as $check) {
             self::assertArrayHasKey('hint', $check);
         }
+    }
+
+    private function script(string $dir, string $name, string $body, bool $executable = true): string
+    {
+        $path = $dir . '/' . $name;
+        file_put_contents($path, "#!/bin/sh\n" . $body . "\n");
+        chmod($path, $executable ? 0755 : 0644);
+
+        return $path;
+    }
+
+    private function installer(): Installer
+    {
+        return new Installer($this->tempDir('aepinst'));
     }
 }

@@ -36,6 +36,7 @@ final class SmtpMailer implements Mailer
             return;
         }
         $this->transcript = [];
+
         try {
             $this->connect();
             $this->expect(220);
@@ -113,7 +114,7 @@ final class SmtpMailer implements Mailer
     /**
      * @param int|list<int> $expected
      */
-    private function command(string $line, int|array $expected, bool $secret = false): string
+    private function command(string $line, array|int $expected, bool $secret = false): string
     {
         $this->write($line, $secret);
 
@@ -134,7 +135,7 @@ final class SmtpMailer implements Mailer
     /**
      * @param int|list<int> $expected
      */
-    private function expect(int|array $expected): string
+    private function expect(array|int $expected): string
     {
         if ($this->socket === null) {
             throw new MailException('Not connected.');

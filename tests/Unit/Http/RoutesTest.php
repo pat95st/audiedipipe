@@ -7,6 +7,7 @@ namespace AudiEdiPipe\Tests\Unit\Http;
 use AudiEdiPipe\Http\Router;
 use AudiEdiPipe\Http\Routes;
 use AudiEdiPipe\Tests\Support\TestCase;
+use ReflectionClass;
 
 /**
  * Every registered route must point to a loadable controller class with a
@@ -23,7 +24,7 @@ final class RoutesTest extends TestCase
         self::assertNotEmpty($router->routes());
         foreach ($router->routes() as $route) {
             self::assertTrue(class_exists($route->controller), $route->controller . ' cannot be loaded');
-            $reflection = new \ReflectionClass($route->controller);
+            $reflection = new ReflectionClass($route->controller);
             self::assertTrue($reflection->hasMethod($route->action), sprintf('%s::%s() is missing (%s %s)', $route->controller, $route->action, $route->method, $route->pattern));
             self::assertTrue($reflection->getMethod($route->action)->isPublic(), sprintf('%s::%s() must be public', $route->controller, $route->action));
         }

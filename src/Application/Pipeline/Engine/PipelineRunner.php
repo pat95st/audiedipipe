@@ -61,7 +61,7 @@ final class PipelineRunner
     public function runJob(int $jobId, int $deadline): int
     {
         $executed = 0;
-        while (true) {
+        for (;;) {
             $job = $this->db->fetchOne(
                 'SELECT j.*, p.metadata_template_id FROM jobs j JOIN pipelines p ON p.id = j.pipeline_id WHERE j.id = ?',
                 [$jobId],
@@ -154,6 +154,7 @@ final class PipelineRunner
                 $this->db->update('jobs', $jobUpdate, ['id' => $jobId]);
 
                 return true;
+
             case 'waiting':
                 $this->db->update('job_stages', ['status' => StageStatus::Waiting->value, 'log' => $log], ['id' => $stageId]);
                 $status = $outcome->waitStatus ?? JobStatus::WaitingManual;
@@ -163,6 +164,7 @@ final class PipelineRunner
                 $this->notifier?->jobEvent($jobId, $status->value);
 
                 return false;
+
             default:
                 $this->db->update('job_stages', [
                     'status' => StageStatus::Failed->value,

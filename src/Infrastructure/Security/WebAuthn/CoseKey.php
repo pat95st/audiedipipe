@@ -46,6 +46,7 @@ final class CoseKey
 
             return self::pem($der);
         }
+
         throw new InvalidArgumentException('Unsupported COSE key type.');
     }
 

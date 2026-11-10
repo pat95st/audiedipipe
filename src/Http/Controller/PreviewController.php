@@ -39,6 +39,7 @@ final class PreviewController extends Controller
         $data = $this->request->json();
         $chain = is_array($data['chain'] ?? null) ? array_values(array_filter($data['chain'], 'is_array')) : [];
         $token = (string) ($data['token'] ?? '');
+
         try {
             $result = $this->app->get(PreviewService::class)->render($token, $chain);
         } catch (ValidationException $e) {

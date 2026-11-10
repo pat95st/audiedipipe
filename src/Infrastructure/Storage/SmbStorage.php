@@ -35,6 +35,7 @@ final class SmbStorage implements StorageAdapter
                 if ($recursive) {
                     array_push($files, ...$this->listFiles($full, true));
                 }
+
                 continue;
             }
             $files[] = new RemoteFile('/' . $full, $entry['size'], $entry['mtime']);
@@ -114,6 +115,7 @@ final class SmbStorage implements StorageAdapter
         $authFile = (string) tempnam(sys_get_temp_dir(), 'aeps');
         chmod($authFile, 0600);
         file_put_contents($authFile, sprintf("username = %s\npassword = %s\n%s", $this->username, $this->password, $this->domain !== '' ? 'domain = ' . $this->domain . "\n" : ''));
+
         try {
             $result = $this->runner->run([
                 $this->binary, '//' . $this->host . '/' . $this->share, '-A', $authFile, '-c', $commands,
@@ -127,6 +129,7 @@ final class SmbStorage implements StorageAdapter
             if ($result->exitCode === 127) {
                 throw new StorageException('smbclient is not installed.');
             }
+
             throw new StorageException('smbclient failed: ' . $result->tail(3));
         }
 

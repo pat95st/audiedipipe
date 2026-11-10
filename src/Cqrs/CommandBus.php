@@ -24,8 +24,8 @@ final class CommandBus
     }
 
     /**
-     * @param class-string<Command>     $commandClass
-     * @param callable(Command): mixed  $handler
+     * @param class-string<Command>    $commandClass
+     * @param callable(Command): mixed $handler
      */
     public function register(string $commandClass, callable $handler): void
     {

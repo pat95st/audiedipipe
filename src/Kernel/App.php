@@ -31,6 +31,7 @@ use AudiEdiPipe\Application\User\UserQueryHandler;
 use AudiEdiPipe\Cqrs\Command;
 use AudiEdiPipe\Cqrs\CommandBus;
 use AudiEdiPipe\Cqrs\HandlerProvider;
+use AudiEdiPipe\Cqrs\Query;
 use AudiEdiPipe\Cqrs\QueryBus;
 use AudiEdiPipe\Domain\Audio\Effect\EffectRegistry;
 use AudiEdiPipe\Domain\Pipeline\StageCatalog;
@@ -248,7 +249,7 @@ final class App
                 if (is_subclass_of($message, Command::class)) {
                     $commands?->register($message, $callable);
                 } else {
-                    /** @var class-string<\AudiEdiPipe\Cqrs\Query> $message */
+                    /** @var class-string<Query> $message */
                     $queries?->register($message, $callable);
                 }
             }

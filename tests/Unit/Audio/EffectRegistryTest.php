@@ -19,7 +19,7 @@ final class EffectRegistryTest extends TestCase
     {
         $registry = EffectRegistry::default();
         foreach (self::EXPECTED as $type) {
-            self::assertTrue($registry->has($type), "missing effect: $type");
+            self::assertTrue($registry->has($type), "missing effect: {$type}");
         }
         self::assertCount(8, $registry->all());
     }
@@ -45,7 +45,7 @@ final class EffectRegistryTest extends TestCase
         $registry = EffectRegistry::default();
         foreach ($registry->all() as $type => $effect) {
             $normalized = $effect->normalize([]);
-            self::assertNotSame([], $normalized, "effect $type produced no defaults");
+            self::assertNotSame([], $normalized, "effect {$type} produced no defaults");
         }
     }
 }

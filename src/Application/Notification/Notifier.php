@@ -107,7 +107,7 @@ final class Notifier
     /**
      * Custom notification from a "notify" pipeline stage.
      *
-     * @param array<string, mixed> $stageParams
+     * @param array<string, mixed>  $stageParams
      * @param array<string, string> $placeholders
      */
     public function custom(array $stageParams, array $placeholders): int

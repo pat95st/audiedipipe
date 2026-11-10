@@ -6,6 +6,7 @@ namespace AudiEdiPipe\Tests\Support;
 
 use AudiEdiPipe\Infrastructure\Persistence\Database;
 use AudiEdiPipe\Infrastructure\Persistence\Migrator;
+use AudiEdiPipe\Infrastructure\Security\Crypto;
 use AudiEdiPipe\Kernel\App;
 use AudiEdiPipe\Kernel\Config;
 use PHPUnit\Framework\TestCase as BaseTestCase;
@@ -70,7 +71,7 @@ abstract class TestCase extends BaseTestCase
 
         $config = new Config(array_replace_recursive([
             'app' => [
-                'key' => \AudiEdiPipe\Infrastructure\Security\Crypto::generateKey(),
+                'key' => Crypto::generateKey(),
                 'url' => 'http://localhost',
                 'debug' => true,
                 'default_locale' => 'en',

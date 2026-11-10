@@ -13,6 +13,13 @@ final class TotpTest extends TestCase
 {
     private const RFC_SECRET = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'; // "12345678901234567890"
 
+    #[DataProvider('rfcVectors')]
+    public function test_rfc6238_vectors(int $timestamp, string $expected): void
+    {
+        $totp = new Totp(digits: 8);
+        self::assertSame($expected, $totp->code(self::RFC_SECRET, $timestamp));
+    }
+
     /**
      * RFC 6238 Appendix B test vectors (SHA-1, 8 digits).
      *
@@ -27,13 +34,6 @@ final class TotpTest extends TestCase
             [1234567890, '89005924'],
             [2000000000, '69279037'],
         ];
-    }
-
-    #[DataProvider('rfcVectors')]
-    public function test_rfc6238_vectors(int $timestamp, string $expected): void
-    {
-        $totp = new Totp(digits: 8);
-        self::assertSame($expected, $totp->code(self::RFC_SECRET, $timestamp));
     }
 
     public function test_generate_secret_is_valid_base32_of_requested_length(): void

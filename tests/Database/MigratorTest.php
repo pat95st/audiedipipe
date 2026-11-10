@@ -10,13 +10,6 @@ use AudiEdiPipe\Tests\Support\TestCase;
 
 final class MigratorTest extends TestCase
 {
-    private function freshDb(): Database
-    {
-        $dir = $this->tempDir('aepmig');
-
-        return Database::fromConfig(['driver' => 'sqlite', 'path' => $dir . '/m.sqlite']);
-    }
-
     public function test_migrate_creates_core_tables(): void
     {
         $db = $this->freshDb();
@@ -29,7 +22,7 @@ final class MigratorTest extends TestCase
             $db->fetchAll("SELECT name FROM sqlite_master WHERE type = 'table'"),
         );
         foreach (['users', 'pipelines', 'jobs', 'sources', 'settings', 'passkeys', 'auth_codes'] as $table) {
-            self::assertContains($table, $tables, "missing table: $table");
+            self::assertContains($table, $tables, "missing table: {$table}");
         }
     }
 
@@ -44,5 +37,12 @@ final class MigratorTest extends TestCase
         $second = $migrator->migrate();
         self::assertSame([], $second, 'running migrations twice should apply nothing new');
         self::assertSame([], $migrator->pending());
+    }
+
+    private function freshDb(): Database
+    {
+        $dir = $this->tempDir('aepmig');
+
+        return Database::fromConfig(['driver' => 'sqlite', 'path' => $dir . '/m.sqlite']);
     }
 }

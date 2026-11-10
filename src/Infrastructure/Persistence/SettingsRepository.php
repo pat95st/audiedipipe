@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AudiEdiPipe\Infrastructure\Persistence;
 
+use PDOException;
+
 /**
  * Key/value application settings stored as JSON.
  */
@@ -57,12 +59,13 @@ final class SettingsRepository
     {
         if ($this->cache === null) {
             $values = self::DEFAULTS;
+
             try {
                 foreach ($this->db->fetchAll('SELECT name, value FROM settings') as $row) {
                     $decoded = json_decode((string) $row['value'], true);
                     $values[(string) $row['name']] = $decoded;
                 }
-            } catch (\PDOException) {
+            } catch (PDOException) {
                 // not installed yet
             }
             $this->cache = $values;

@@ -43,6 +43,7 @@ class WebDavStorage implements StorageAdapter
                 if ($recursive) {
                     array_push($files, ...$this->listFiles($relative, true));
                 }
+
                 continue;
             }
             $files[] = new RemoteFile($relative, $entry['size'], $entry['mtime']);
@@ -87,6 +88,7 @@ class WebDavStorage implements StorageAdapter
         $response = $this->http->request('GET', $this->url($remotePath), [], null, $this->options() + ['download_to' => $localPath]);
         if (!$response->ok()) {
             @unlink($localPath);
+
             throw new StorageException(sprintf('WebDAV download failed (%d): %s', $response->status, $remotePath));
         }
     }

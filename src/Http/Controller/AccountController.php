@@ -116,6 +116,7 @@ final class AccountController extends Controller
     public function passkeyRegister(): Response
     {
         $data = $this->request->json();
+
         try {
             $result = $this->app->get(AuthService::class)->verifyPasskeyRegistration($this->session, $this->webAuthn(), $data);
         } catch (Throwable $e) {

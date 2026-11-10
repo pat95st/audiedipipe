@@ -105,6 +105,7 @@ final class SettingsController extends Controller
         $to = $this->request->string('to') ?: (string) ($this->user['email'] ?? '');
         $mailer = $this->app->get(Mailer::class);
         $resolved = $mailer instanceof ConfiguredMailer ? $mailer->resolve() : $mailer;
+
         try {
             $resolved->send(new Message([$to], $this->view->t('settings.test_mail_subject'), $this->view->t('settings.test_mail_body')));
             $this->flash('success', $resolved instanceof SmtpMailer ? 'settings.test_mail_sent' : 'settings.test_mail_logged', ['to' => $to]);

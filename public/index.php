@@ -17,6 +17,7 @@ use AudiEdiPipe\Kernel\Worker;
 use AudiEdiPipe\Kernel\WorkerTrigger;
 
 define('APP_ROOT', dirname(__DIR__));
+
 require APP_ROOT . '/src/bootstrap.php';
 
 $app = App::fromConfigFile();
@@ -60,6 +61,7 @@ if ($app->isInstalled()) {
         } elseif (function_exists('litespeed_finish_request')) {
             litespeed_finish_request();
         }
+
         try {
             $worker->run();
         } catch (Throwable $e) {

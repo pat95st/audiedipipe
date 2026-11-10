@@ -17,36 +17,6 @@ use AudiEdiPipe\Tests\Support\TestCase;
  */
 final class InstallFlowTest extends TestCase
 {
-    private function freshKernel(): HttpKernel
-    {
-        // Empty config => App::isInstalled() is false.
-        $app = new App(new Config([]), APP_ROOT);
-
-        return new HttpKernel($app, new ArraySession());
-    }
-
-    private function fakeBinary(string $name, bool $executable = true): string
-    {
-        $path = $this->tempDir('aepbin') . '/' . $name;
-        file_put_contents($path, "#!/bin/sh\necho \"{$name} version 99.0-fake\"\n");
-        chmod($path, $executable ? 0755 : 0644);
-
-        return $path;
-    }
-
-    /**
-     * @return array{ok: bool, checks: list<array<string, mixed>>, html: string}
-     */
-    private function checkJson(HttpKernel $kernel, string $ffmpeg, string $ffprobe): array
-    {
-        $response = $kernel->handle(new Request('GET', '/install/check', query: ['ffmpeg' => $ffmpeg, 'ffprobe' => $ffprobe]));
-        self::assertSame(200, $response->status);
-        $data = json_decode($response->body, true);
-        self::assertIsArray($data);
-
-        return $data;
-    }
-
     public function test_install_page_renders_before_installation(): void
     {
         $response = $this->freshKernel()->handle(new Request('GET', '/install'));
@@ -124,5 +94,35 @@ final class InstallFlowTest extends TestCase
         self::assertSame(200, $response->status);
         self::assertStringStartsWith('text/css', $response->headers['Content-Type'] ?? '');
         self::assertStringContainsString('--bs-primary', $response->body);
+    }
+
+    private function freshKernel(): HttpKernel
+    {
+        // Empty config => App::isInstalled() is false.
+        $app = new App(new Config([]), APP_ROOT);
+
+        return new HttpKernel($app, new ArraySession());
+    }
+
+    private function fakeBinary(string $name, bool $executable = true): string
+    {
+        $path = $this->tempDir('aepbin') . '/' . $name;
+        file_put_contents($path, "#!/bin/sh\necho \"{$name} version 99.0-fake\"\n");
+        chmod($path, $executable ? 0755 : 0644);
+
+        return $path;
+    }
+
+    /**
+     * @return array{ok: bool, checks: list<array<string, mixed>>, html: string}
+     */
+    private function checkJson(HttpKernel $kernel, string $ffmpeg, string $ffprobe): array
+    {
+        $response = $kernel->handle(new Request('GET', '/install/check', query: ['ffmpeg' => $ffmpeg, 'ffprobe' => $ffprobe]));
+        self::assertSame(200, $response->status);
+        $data = json_decode($response->body, true);
+        self::assertIsArray($data);
+
+        return $data;
     }
 }

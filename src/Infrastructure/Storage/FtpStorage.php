@@ -47,6 +47,7 @@ final class FtpStorage implements StorageAdapter
                     if ($recursive) {
                         array_push($files, ...$this->listFiles($full, true));
                     }
+
                     continue;
                 }
                 $modify = (string) ($entry['modify'] ?? '');
@@ -66,6 +67,7 @@ final class FtpStorage implements StorageAdapter
                 if ($recursive) {
                     array_push($files, ...$this->listFiles($full, true));
                 }
+
                 continue;
             }
             $files[] = new RemoteFile($full, $entry['size'], $entry['mtime']);

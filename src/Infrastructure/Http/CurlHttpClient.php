@@ -8,7 +8,7 @@ use RuntimeException;
 
 final class CurlHttpClient implements HttpClient
 {
-    public function request(string $method, string $url, array $headers = [], string|array|null $body = null, array $options = []): HttpResponse
+    public function request(string $method, string $url, array $headers = [], array|string|null $body = null, array $options = []): HttpResponse
     {
         if (!function_exists('curl_init')) {
             throw new RuntimeException('PHP extension "curl" is required.');

@@ -14,4 +14,5 @@ if ($path !== '/' && is_file($file) && !str_ends_with($file, '.php')) {
     return false;
 }
 $_SERVER['SCRIPT_NAME'] = '/index.php';
+
 require __DIR__ . '/index.php';

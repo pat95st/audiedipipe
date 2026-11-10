@@ -21,6 +21,7 @@ final class Config
         if (!is_file($file)) {
             return new self([]);
         }
+
         /** @var mixed $values */
         $values = require $file;
 

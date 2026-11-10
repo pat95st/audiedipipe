@@ -133,6 +133,7 @@ final class ScpStorage implements StorageAdapter
         chmod($keyFile, 0600);
         file_put_contents($keyFile, rtrim($this->privateKey) . "\n");
         $portFlag = $binary === 'scp' ? '-P' : '-p';
+
         try {
             $result = $this->runner->run([
                 $binary, '-i', $keyFile, $portFlag, (string) $this->port,

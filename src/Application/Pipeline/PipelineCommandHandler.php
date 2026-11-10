@@ -37,6 +37,7 @@ final class PipelineCommandHandler implements HandlerProvider
         if ($name === '') {
             throw new ValidationException('pipelines.error.name_required');
         }
+
         try {
             $stages = $this->catalog->normalizeStages($command->stages);
         } catch (InvalidArgumentException $e) {

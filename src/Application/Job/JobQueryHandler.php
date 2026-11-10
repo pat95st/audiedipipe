@@ -49,15 +49,15 @@ final class JobQueryHandler implements HandlerProvider
         $items = $this->db->fetchAll(
             'SELECT j.id, j.pipeline_id, j.status, j.origin, j.original_name, j.created_at, j.updated_at, j.finished_at, j.error,
                     p.name AS pipeline_name
-             FROM jobs j JOIN pipelines p ON p.id = j.pipeline_id' . $whereSql .
-            ' ORDER BY j.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset,
+             FROM jobs j JOIN pipelines p ON p.id = j.pipeline_id' . $whereSql
+            . ' ORDER BY j.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset,
             $params,
         );
         if ($items !== []) {
             $ids = array_map(static fn (array $r): int => (int) $r['id'], $items);
             $stageRows = $this->db->fetchAll(
-                'SELECT job_id, position, type, name, status FROM job_stages WHERE job_id IN (' .
-                implode(', ', array_fill(0, count($ids), '?')) . ') ORDER BY job_id, position',
+                'SELECT job_id, position, type, name, status FROM job_stages WHERE job_id IN ('
+                . implode(', ', array_fill(0, count($ids), '?')) . ') ORDER BY job_id, position',
                 $ids,
             );
             $byJob = [];

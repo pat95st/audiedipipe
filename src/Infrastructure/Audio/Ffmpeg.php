@@ -219,6 +219,7 @@ class Ffmpeg
         }
         $buckets = max(1, min($buckets, $samples));
         $perBucket = $samples / $buckets;
+
         /** @var array<int, int> $values */
         $values = unpack('s*', substr($pcm, 0, $samples * 2)) ?: [];
         $peaks = [];

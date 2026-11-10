@@ -49,14 +49,6 @@ final class ParametricEq extends AbstractEffect
         ];
     }
 
-    /**
-     * @return list<array<string, mixed>>
-     */
-    private function defaultBands(): array
-    {
-        return array_values(array_map(static fn (array $b): array => ['enabled' => true] + $b, self::DEFAULT_BANDS));
-    }
-
     public function normalize(array $params): array
     {
         $result = [
@@ -104,5 +96,13 @@ final class ParametricEq extends AbstractEffect
         }
 
         return implode(',', $filters);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function defaultBands(): array
+    {
+        return array_values(array_map(static fn (array $b): array => ['enabled' => true] + $b, self::DEFAULT_BANDS));
     }
 }

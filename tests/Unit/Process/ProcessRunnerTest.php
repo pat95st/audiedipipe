@@ -7,6 +7,7 @@ namespace AudiEdiPipe\Tests\Unit\Process;
 use AudiEdiPipe\Infrastructure\Process\ProcessResult;
 use AudiEdiPipe\Infrastructure\Process\ProcessRunner;
 use AudiEdiPipe\Tests\Support\TestCase;
+use ReflectionMethod;
 
 final class ProcessRunnerTest extends TestCase
 {
@@ -37,7 +38,7 @@ final class ProcessRunnerTest extends TestCase
         if (!function_exists('exec')) {
             self::markTestSkipped('exec() is disabled.');
         }
-        $method = new \ReflectionMethod(ProcessRunner::class, 'runWithExec');
+        $method = new ReflectionMethod(ProcessRunner::class, 'runWithExec');
         $result = $method->invoke(new ProcessRunner(), self::COMMAND);
 
         self::assertInstanceOf(ProcessResult::class, $result);

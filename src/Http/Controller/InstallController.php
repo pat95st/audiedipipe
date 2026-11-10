@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace AudiEdiPipe\Http\Controller;
 
+use AudiEdiPipe\Application\ValidationException;
 use AudiEdiPipe\Http\Response;
 use AudiEdiPipe\Infrastructure\I18n\Translator;
 use AudiEdiPipe\Kernel\Installer;
+use InvalidArgumentException;
 use Throwable;
 
 /**
@@ -71,21 +73,22 @@ final class InstallController extends Controller
         $input['ffprobe'] = $ffprobe;
         $this->session->set('install_ffmpeg', $ffmpeg);
         $this->session->set('install_ffprobe', $ffprobe);
+
         try {
             $installer = new Installer($this->app->root);
             if (!Installer::requirementsMet($installer->requirements($ffmpeg, $ffprobe))) {
-                throw new \InvalidArgumentException($this->view->t('install.fix_requirements'));
+                throw new InvalidArgumentException($this->view->t('install.fix_requirements'));
             }
             if (($input['admin_password'] ?? '') !== ($input['admin_password_confirm'] ?? '')) {
-                throw new \InvalidArgumentException($this->view->t('account.error.password_mismatch'));
+                throw new InvalidArgumentException($this->view->t('account.error.password_mismatch'));
             }
             if (($input['db_driver'] ?? '') === 'sqlite') {
-                throw new \InvalidArgumentException('SQLite is only supported for tests.');
+                throw new InvalidArgumentException('SQLite is only supported for tests.');
             }
             $installer->install($input);
         } catch (Throwable $e) {
             $message = $e->getMessage();
-            if ($e instanceof \AudiEdiPipe\Application\ValidationException) {
+            if ($e instanceof ValidationException) {
                 $message = $this->view->t($e->getMessage(), $e->params);
             }
             $this->session->set('install_error', $message);

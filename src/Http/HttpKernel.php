@@ -146,9 +146,11 @@ final class HttpKernel
         $view->share('flashes', $this->session->takeFlashes());
 
         $class = $route->controller;
+
         /** @var Controller $controller */
         $controller = new $class($this->app, $view, $this->session, $request, $user);
         $action = $route->action;
+
         try {
             /** @var Response $response */
             $response = $controller->{$action}();

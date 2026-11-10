@@ -23,6 +23,7 @@ final class LocalStorage implements StorageAdapter
             ? new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS))
             : new FilesystemIterator($path, FilesystemIterator::SKIP_DOTS);
         $files = [];
+
         /** @var SplFileInfo $info */
         foreach ($iterator as $info) {
             if ($info->isFile()) {

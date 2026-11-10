@@ -9,11 +9,6 @@ use PHPUnit\Framework\TestCase;
 
 final class TranslatorTest extends TestCase
 {
-    private function translator(string $locale = 'en'): Translator
-    {
-        return new Translator(APP_ROOT . '/lang', $locale);
-    }
-
     public function test_ships_with_german_and_english(): void
     {
         $available = $this->translator()->available();
@@ -37,6 +32,7 @@ final class TranslatorTest extends TestCase
         $dir = sys_get_temp_dir() . '/aep_i18n_' . bin2hex(random_bytes(4));
         mkdir($dir);
         file_put_contents($dir . '/en.json', json_encode(['greeting' => 'Hello {name}!']));
+
         try {
             $translator = new Translator($dir, 'en');
             self::assertSame('Hello Patrick!', $translator->trans('greeting', ['name' => 'Patrick']));
@@ -59,5 +55,10 @@ final class TranslatorTest extends TestCase
         $de = $this->translator('de')->catalogue('de');
         self::assertSame([], array_keys(array_diff_key($en, $de)), 'German is missing keys present in English');
         self::assertSame([], array_keys(array_diff_key($de, $en)), 'English is missing keys present in German');
+    }
+
+    private function translator(string $locale = 'en'): Translator
+    {
+        return new Translator(APP_ROOT . '/lang', $locale);
     }
 }

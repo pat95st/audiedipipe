@@ -13,8 +13,8 @@ final class Router
     private array $routes = [];
 
     /**
-     * @param class-string    $controller
-     * @param list<string>    $roles  empty = any authenticated user
+     * @param class-string $controller
+     * @param list<string> $roles      empty = any authenticated user
      */
     public function add(
         string $method,

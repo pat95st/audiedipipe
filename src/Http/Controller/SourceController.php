@@ -80,6 +80,7 @@ final class SourceController extends Controller
         if (!is_array($source)) {
             return Response::json(['error' => 'not_found'], 404);
         }
+
         try {
             $adapter = $this->app->get(StorageConnections::class)->fromConfig((string) $source['type'], $source['config']);
             $adapter->test((string) $source['path']);

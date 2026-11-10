@@ -10,11 +10,6 @@ use PHPUnit\Framework\TestCase;
 
 final class FileFilterTest extends TestCase
 {
-    private function file(string $path, int $size = 1_000_000, int $modified = 1000): RemoteFile
-    {
-        return new RemoteFile($path, $size, $modified);
-    }
-
     public function test_accepts_matching_extension(): void
     {
         $filter = new FileFilter(['extensions' => 'wav, flac']);
@@ -40,7 +35,7 @@ final class FileFilterTest extends TestCase
 
     public function test_regex_filter(): void
     {
-        $filter = new FileFilter(['regex' => '^ep\\d{3}']);
+        $filter = new FileFilter(['regex' => '^ep\d{3}']);
         self::assertTrue($filter->accepts($this->file('/in/ep042.wav')));
         self::assertFalse($filter->accepts($this->file('/in/episode.wav')));
     }
@@ -58,5 +53,10 @@ final class FileFilterTest extends TestCase
         $now = 10_000;
         self::assertFalse($filter->accepts($this->file('/in/fresh.wav', modified: $now - 10), $now));
         self::assertTrue($filter->accepts($this->file('/in/settled.wav', modified: $now - 120), $now));
+    }
+
+    private function file(string $path, int $size = 1_000_000, int $modified = 1000): RemoteFile
+    {
+        return new RemoteFile($path, $size, $modified);
     }
 }

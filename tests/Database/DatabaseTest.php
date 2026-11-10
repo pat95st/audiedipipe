@@ -10,14 +10,6 @@ use RuntimeException;
 
 final class DatabaseTest extends TestCase
 {
-    private function memory(): Database
-    {
-        $db = Database::fromConfig(['driver' => 'sqlite', 'path' => ':memory:']);
-        $db->execute('CREATE TABLE t (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, n INTEGER)');
-
-        return $db;
-    }
-
     public function test_insert_returns_id_and_fetch_roundtrips(): void
     {
         $db = $this->memory();
@@ -51,9 +43,11 @@ final class DatabaseTest extends TestCase
     public function test_transaction_rolls_back_on_exception(): void
     {
         $db = $this->memory();
+
         try {
             $db->transaction(static function () use ($db): void {
                 $db->insert('t', ['name' => 'x', 'n' => 1]);
+
                 throw new RuntimeException('boom');
             });
         } catch (RuntimeException) {
@@ -65,11 +59,13 @@ final class DatabaseTest extends TestCase
     public function test_nested_transaction_rolls_back_as_one_unit(): void
     {
         $db = $this->memory();
+
         try {
             $db->transaction(static function () use ($db): void {
                 $db->insert('t', ['name' => 'outer', 'n' => 1]);
                 $db->transaction(static function () use ($db): void {
                     $db->insert('t', ['name' => 'inner', 'n' => 2]);
+
                     throw new RuntimeException('boom');
                 });
             });
@@ -77,5 +73,13 @@ final class DatabaseTest extends TestCase
             // expected
         }
         self::assertSame(0, (int) $db->fetchValue('SELECT COUNT(*) FROM t'));
+    }
+
+    private function memory(): Database
+    {
+        $db = Database::fromConfig(['driver' => 'sqlite', 'path' => ':memory:']);
+        $db->execute('CREATE TABLE t (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, n INTEGER)');
+
+        return $db;
     }
 }

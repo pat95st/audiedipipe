@@ -34,6 +34,7 @@ final class Worker
         if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
             return ['scanned' => 0, 'imported' => 0, 'stages' => 0, 'skipped' => true];
         }
+
         try {
             @file_put_contents($this->app->storagePath('cache/last_cron'), gmdate('Y-m-d H:i:s'));
             $scan = $this->app->get(SourceScanner::class)->scanDue();

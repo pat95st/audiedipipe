@@ -34,7 +34,7 @@ final class SftpStorage implements StorageAdapter
         if (function_exists('ssh2_connect')) {
             return 'ssh2';
         }
-        if (class_exists('phpseclib3\\Net\\SFTP')) {
+        if (class_exists('phpseclib3\Net\SFTP')) {
             return 'phpseclib';
         }
 
@@ -61,6 +61,7 @@ final class SftpStorage implements StorageAdapter
                     if ($recursive) {
                         array_push($files, ...$this->listFiles($full, true));
                     }
+
                     continue;
                 }
                 $files[] = new RemoteFile($full, (int) ($attributes['size'] ?? 0), (int) ($attributes['mtime'] ?? 0));
@@ -87,6 +88,7 @@ final class SftpStorage implements StorageAdapter
                 if ($recursive) {
                     array_push($files, ...$this->listFiles($full, true));
                 }
+
                 continue;
             }
             $files[] = new RemoteFile($full, (int) $stat['size'], (int) $stat['mtime']);
@@ -160,11 +162,11 @@ final class SftpStorage implements StorageAdapter
             throw new StorageException('Neither ext-ssh2 nor phpseclib/phpseclib is available for SFTP.');
         }
         if ($backend === 'phpseclib') {
-            $class = 'phpseclib3\\Net\\SFTP';
+            $class = 'phpseclib3\Net\SFTP';
             $sftp = new $class($this->host, $this->port, 20);
             $credential = $this->password;
             if ($this->privateKey !== '') {
-                $loader = 'phpseclib3\\Crypt\\PublicKeyLoader';
+                $loader = 'phpseclib3\Crypt\PublicKeyLoader';
                 $credential = $loader::load($this->privateKey, $this->passphrase !== '' ? $this->passphrase : false);
             }
             if (!$sftp->login($this->username, $credential)) {

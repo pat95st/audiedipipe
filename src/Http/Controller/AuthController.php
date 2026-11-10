@@ -121,6 +121,7 @@ final class AuthController extends Controller
     public function passkeyLogin(): Response
     {
         $auth = $this->app->get(AuthService::class);
+
         try {
             $user = $auth->verifyPasskeyLogin($this->session, $this->webAuthn(), $this->request->json());
         } catch (Throwable $e) {

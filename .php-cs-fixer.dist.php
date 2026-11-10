@@ -17,5 +17,12 @@ return (new PhpCsFixer\Config())
         'php_unit_internal_class' => false,
         'global_namespace_import' => ['import_classes' => true, 'import_functions' => false, 'import_constants' => false],
         'yoda_style' => false,
+        // Project conventions that differ from the @PhpCsFixer preset:
+        'concat_space' => ['spacing' => 'one'],
+        'php_unit_method_casing' => ['case' => 'snake_case'],
+        'single_line_empty_body' => false,
+        'empty_loop_condition' => ['style' => 'for'],
+        'phpdoc_to_comment' => ['ignored_tags' => ['var']],
+        'phpdoc_types_order' => ['null_adjustment' => 'always_last', 'sort_algorithm' => 'none'],
     ])
     ->setFinder($finder);

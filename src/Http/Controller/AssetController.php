@@ -48,7 +48,8 @@ final class AssetController extends Controller
         $secondary = self::hex($settings->string('secondary_color'), '#1c7ed6');
 
         return Response::text(self::css($primary, $secondary), 200, 'text/css; charset=utf-8')
-            ->withHeader('Cache-Control', 'public, max-age=300');
+            ->withHeader('Cache-Control', 'public, max-age=300')
+        ;
     }
 
     public function translations(): Response

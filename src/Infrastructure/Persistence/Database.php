@@ -31,11 +31,14 @@ final class Database
     {
         $driver = (string) ($config['driver'] ?? 'mysql');
         $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION];
+
         switch ($driver) {
             case 'sqlite':
                 $dsn = 'sqlite:' . (string) ($config['path'] ?? ':memory:');
                 $pdo = new PDO($dsn, null, null, $options);
+
                 break;
+
             case 'pgsql':
                 $dsn = sprintf(
                     'pgsql:host=%s;port=%d;dbname=%s',
@@ -45,7 +48,9 @@ final class Database
                 );
                 $pdo = new PDO($dsn, (string) ($config['user'] ?? ''), (string) ($config['password'] ?? ''), $options);
                 $pdo->exec("SET NAMES 'UTF8'");
+
                 break;
+
             default:
                 $socket = (string) ($config['socket'] ?? '');
                 $dsn = $socket !== ''
@@ -140,8 +145,8 @@ final class Database
     }
 
     /**
-     * @param array<string, mixed>     $data
-     * @param array<string, mixed>     $where
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $where
      */
     public function update(string $table, array $data, array $where): int
     {
@@ -182,6 +187,7 @@ final class Database
             $this->pdo->beginTransaction();
         }
         ++$this->transactionDepth;
+
         try {
             $result = $callback();
             --$this->transactionDepth;
@@ -195,6 +201,7 @@ final class Database
             if ($this->transactionDepth === 0 && $this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
+
             throw $e;
         }
     }
@@ -258,6 +265,7 @@ final class Database
         foreach ($where as $column => $value) {
             if ($value === null) {
                 $parts[] = $this->quoteIdentifier($column) . ' IS NULL';
+
                 continue;
             }
             $parts[] = $this->quoteIdentifier($column) . ' = :w_' . $column;

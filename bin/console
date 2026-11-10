@@ -24,6 +24,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 define('APP_ROOT', dirname(__DIR__));
+
 require APP_ROOT . '/src/bootstrap.php';
 
 /**
@@ -77,6 +78,7 @@ function aep_app(): App
     $app = App::fromConfigFile();
     if ($app->config->isEmpty()) {
         aep_err('Not installed: config/config.php is missing. Run "php bin/console install" first.');
+
         exit(1);
     }
 
@@ -99,6 +101,7 @@ try {
                     aep_out('     -> ' . (is_string($hints[$check['hint']] ?? null) ? $hints[$check['hint']] : $check['hint']));
                 }
             }
+
             exit(Installer::requirementsMet($checks) ? 0 : 1);
 
         case 'install':
@@ -127,12 +130,14 @@ try {
             aep_out('Add this cron job to process files automatically:');
             aep_out('  * * * * * php ' . APP_ROOT . '/bin/console cron >/dev/null 2>&1');
             aep_out('Web cron URL (alternative): ' . $config['app']['url'] . '/cron?token=' . $config['worker']['cron_token']);
+
             exit(0);
 
         case 'migrate':
             $app = aep_app();
             $applied = $app->get(Migrator::class)->migrate();
             aep_out($applied === [] ? 'Database is up to date.' : 'Applied: ' . implode(', ', $applied));
+
             exit(0);
 
         case 'cron':
@@ -142,6 +147,7 @@ try {
             if (!isset($opts['quiet'])) {
                 aep_out(json_encode($result, JSON_UNESCAPED_SLASHES) ?: '');
             }
+
             exit(0);
 
         case 'worker:loop':
@@ -158,12 +164,14 @@ try {
                 $app = App::fromConfigFile();
             }
 
+            // no break
         case 'source:scan':
             $app = aep_app();
             $results = $app->get(SourceScanner::class)->scanDue(true, isset($args[1]) ? (int) $args[1] : null);
             foreach ($results as $id => $result) {
                 aep_out(sprintf('Source #%d: %d imported%s', $id, $result['imported'], $result['error'] !== null ? ' – ERROR: ' . $result['error'] : ''));
             }
+
             exit(0);
 
         case 'user:create':
@@ -176,6 +184,7 @@ try {
                 $opts['name'] ?? null,
             ));
             aep_out('Created user #' . (int) $id);
+
             exit(0);
 
         case 'user:reset-password':
@@ -190,6 +199,7 @@ try {
                 [password_hash($password, PASSWORD_DEFAULT), Database::now(), $username],
             );
             aep_out($count > 0 ? 'Password updated.' : 'User not found.');
+
             exit($count > 0 ? 0 : 1);
 
         case 'user:disable-2fa':
@@ -201,6 +211,7 @@ try {
                 [false, false, Database::now(), $username],
             );
             aep_out($count > 0 ? 'Two-factor authentication disabled.' : 'User not found.');
+
             exit($count > 0 ? 0 : 1);
 
         case 'help':
@@ -218,9 +229,11 @@ try {
             aep_out('  user:create                 Create a user (--username --email --password --role)');
             aep_out('  user:reset-password <user>  Set a new password');
             aep_out('  user:disable-2fa <user>     Disable TOTP and e-mail 2FA for a user');
+
             exit($command === 'help' ? 0 : 1);
     }
 } catch (Throwable $e) {
     aep_err($e->getMessage());
+
     exit(1);
 }

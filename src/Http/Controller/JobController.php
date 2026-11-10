@@ -109,10 +109,12 @@ final class JobController extends Controller
         if (!$moved) {
             throw new ValidationException('upload.error.failed', ['code' => 'move']);
         }
+
         try {
             $this->app->get(Ffmpeg::class)->probe($target);
         } catch (Throwable) {
             @unlink($target);
+
             throw new ValidationException('upload.error.not_audio');
         }
         $jobId = (int) $this->command(new CreateJob($pipelineId, $file['name'], $target, 'upload', null, $this->userId()));

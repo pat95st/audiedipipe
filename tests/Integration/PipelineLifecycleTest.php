@@ -53,8 +53,14 @@ final class PipelineLifecycleTest extends TestCase
 
         $this->expectException(ValidationException::class);
         $commands->dispatch(new SavePipeline(
-            id: null, name: '   ', description: '', enabled: true,
-            sourceId: null, metadataTemplateId: null, stages: [], notifications: [],
+            id: null,
+            name: '   ',
+            description: '',
+            enabled: true,
+            sourceId: null,
+            metadataTemplateId: null,
+            stages: [],
+            notifications: [],
         ));
     }
 }

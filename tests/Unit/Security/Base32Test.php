@@ -11,6 +11,20 @@ use PHPUnit\Framework\TestCase;
 
 final class Base32Test extends TestCase
 {
+    #[DataProvider('vectors')]
+    public function test_encode_matches_rfc4648(string $plain, string $encoded): void
+    {
+        // The implementation omits padding; compare against the unpadded form.
+        $expected = rtrim($encoded, '=');
+        self::assertSame($expected, Base32::encode($plain));
+    }
+
+    #[DataProvider('vectors')]
+    public function test_decode_is_inverse_of_encode(string $plain): void
+    {
+        self::assertSame($plain, Base32::decode(Base32::encode($plain)));
+    }
+
     /**
      * RFC 4648 test vectors.
      *
@@ -27,20 +41,6 @@ final class Base32Test extends TestCase
             ['fooba', 'MZXW6YTB'],
             ['foobar', 'MZXW6YTBOI======'],
         ];
-    }
-
-    #[DataProvider('vectors')]
-    public function test_encode_matches_rfc4648(string $plain, string $encoded): void
-    {
-        // The implementation omits padding; compare against the unpadded form.
-        $expected = rtrim($encoded, '=');
-        self::assertSame($expected, Base32::encode($plain));
-    }
-
-    #[DataProvider('vectors')]
-    public function test_decode_is_inverse_of_encode(string $plain): void
-    {
-        self::assertSame($plain, Base32::decode(Base32::encode($plain)));
     }
 
     public function test_decode_ignores_spaces_padding_and_case(): void
