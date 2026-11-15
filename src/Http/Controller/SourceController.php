@@ -39,11 +39,9 @@ final class SourceController extends Controller
         }
         $cloud = $this->app->get(CloudProviders::class);
         $enabledCloud = $cloud->enabledTypes();
-        // Cloud providers are offered once enabled under Settings > Cloud storage.
-        $types = array_values(array_filter(
-            StorageFactory::TYPES,
-            static fn (string $type): bool => !in_array($type, CloudProviders::TYPES, true) || in_array($type, $enabledCloud, true) || ($source['type'] ?? null) === $type,
-        ));
+        // All storage types are always offered; cloud providers that are not yet set up under
+        // Settings > Cloud storage are marked and explain what is missing.
+        $types = StorageFactory::TYPES;
 
         return $this->render('sources/form', [
             'title' => $source === null ? $this->view->t('sources.new') : (string) $source['name'],
@@ -58,6 +56,7 @@ final class SourceController extends Controller
             'cloud' => [
                 'oauth' => CloudProviders::OAUTH_TYPES,
                 'enabled' => $enabledCloud,
+                'unconfigured' => array_values(array_diff(CloudProviders::TYPES, $enabledCloud)),
                 'icloud_base' => $cloud->icloudBasePath(),
                 'can_configure' => $this->can('settings.manage'),
             ],

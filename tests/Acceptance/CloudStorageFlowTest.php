@@ -32,9 +32,13 @@ final class CloudStorageFlowTest extends TestCase
             self::assertStringContainsString('name="cloud_storage[' . $type . '][enabled]"', $settings->body);
         }
 
-        // Not enabled yet: not offered as storage type.
+        // Not set up yet: still offered as storage type, but marked and explained.
         $form = $kernel->handle(new Request('GET', '/sources/new'));
-        self::assertStringNotContainsString('<option value="dropbox"', $form->body);
+        foreach (['dropbox', 'icloud', 'onedrive', 'gdrive', 'box'] as $type) {
+            self::assertStringContainsString('<option value="' . $type . '"', $form->body);
+        }
+        self::assertStringContainsString('noch nicht eingerichtet', $form->body);
+        self::assertStringContainsString('/settings#cloud', $form->body);
 
         $saved = $kernel->handle(new Request('POST', '/settings', post: [
             '_csrf' => self::CSRF,
@@ -51,9 +55,9 @@ final class CloudStorageFlowTest extends TestCase
         self::assertStringNotContainsString('app-secret', $settings->body);
 
         $form = $kernel->handle(new Request('GET', '/sources/new'));
-        self::assertStringContainsString('<option value="dropbox"', $form->body);
-        self::assertStringContainsString('<option value="icloud"', $form->body);
-        self::assertStringNotContainsString('<option value="gdrive"', $form->body);
+        self::assertStringContainsString('<option value="dropbox">Dropbox</option>', $form->body);
+        self::assertStringContainsString('<option value="icloud">iCloud Drive</option>', $form->body);
+        self::assertStringContainsString('<option value="gdrive">Google Drive – noch nicht eingerichtet</option>', $form->body);
 
         // Start the OAuth flow for a saved Dropbox location.
         $id = (int) $app->get(CommandBus::class)->dispatch(new SaveSource(null, 'Dropbox inbox', 'dropbox', [], '/Inbox', [], 300, 'keep', true));
