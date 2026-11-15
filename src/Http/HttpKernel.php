@@ -56,8 +56,10 @@ final class HttpKernel
         if (!$this->app->isInstalled()) {
             if (str_starts_with($request->path, '/locale/')) {
                 $this->session->set('locale', substr($request->path, 8));
+                $response = Response::redirect($view->url('/install'));
+                $response->headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0';
 
-                return Response::redirect($view->url('/install'));
+                return $response;
             }
             if ($request->path === '/theme.css') {
                 return Response::text(AssetController::css('#e8590c', '#1c7ed6'), 200, 'text/css; charset=utf-8');

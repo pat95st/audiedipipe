@@ -7,6 +7,7 @@ namespace AudiEdiPipe\Http\Controller;
 use AudiEdiPipe\Application\Auth\AuthService;
 use AudiEdiPipe\Http\Response;
 use AudiEdiPipe\Infrastructure\I18n\Translator;
+use AudiEdiPipe\Infrastructure\Persistence\Database;
 use AudiEdiPipe\Infrastructure\Persistence\SettingsRepository;
 use AudiEdiPipe\Infrastructure\Security\WebAuthn\WebAuthnVerifier;
 use Throwable;
@@ -144,10 +145,39 @@ final class AuthController extends Controller
         $code = $this->request->attribute('code');
         if ($this->app->get(Translator::class)->supports($code)) {
             $this->session->set('locale', $code);
+            // A stored account preference outranks the session, so an explicit
+            // switch must update it too – otherwise nothing seems to happen.
+            if ($this->user !== null && ($this->user['locale'] ?? null) !== $code) {
+                $this->app->get(Database::class)->update('users', [
+                    'locale' => $code,
+                    'updated_at' => Database::now(),
+                ], ['id' => (int) $this->user['id']]);
+            }
         }
-        $referer = $this->request->header('referer');
 
-        return Response::redirect($referer !== '' && str_starts_with($referer, $this->request->origin()) ? $referer : $this->view->url('/'));
+        $response = Response::redirect($this->localeReturnUrl());
+        // Never let a browser (Safari in particular) reuse a cached redirect/page.
+        $response->headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0';
+
+        return $response;
+    }
+
+    /**
+     * Same-host referer (scheme-agnostic, so TLS-terminating proxies work), else home.
+     */
+    private function localeReturnUrl(): string
+    {
+        $referer = $this->request->header('referer');
+        $parts = $referer !== '' ? parse_url($referer) : false;
+        if (is_array($parts) && isset($parts['host'])) {
+            $host = $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
+            $path = (string) ($parts['path'] ?? '/');
+            if (strcasecmp($host, $this->request->host()) === 0 && !str_contains($path, '/locale/')) {
+                return $path . (isset($parts['query']) ? '?' . $parts['query'] : '');
+            }
+        }
+
+        return $this->view->url('/');
     }
 
     /**

@@ -22,7 +22,7 @@
  */
 'use strict';
 
-var VERSION = 'aep-v2';
+var VERSION = 'aep-v3';
 var BRANDING_CACHE = 'aep-branding-v1';
 var SCOPE = self.registration ? self.registration.scope : self.location.href.replace(/sw\.js.*$/, '');
 var BASE = new URL(SCOPE).pathname; // e.g. "/" or "/audio/"
@@ -47,7 +47,7 @@ var PRECACHE = [
 ];
 
 // never intercepted (relative to the scope)
-var BYPASS = /^(jobs\/\d+\/(audio|peaks|download|waveform)|jobs\/status|preview\/|media\/|feed\/|uploads\/(?!branding\/)|cron|login|logout|oauth\/|install|i18n\/|sw\.js)/;
+var BYPASS = /^(jobs\/\d+\/(audio|peaks|download|waveform)|jobs\/status|preview\/|media\/|feed\/|uploads\/(?!branding\/)|cron|login|logout|locale\/|oauth\/|install|i18n\/|sw\.js)/;
 
 self.addEventListener('install', function (event) {
     event.waitUntil(
