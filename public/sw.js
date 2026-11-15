@@ -6,7 +6,7 @@
  */
 'use strict';
 
-var VERSION = 'aep-v1';
+var VERSION = 'aep-v2';
 var SCOPE = self.registration ? self.registration.scope : '/';
 var OFFLINE_URL = SCOPE + 'offline';
 var PRECACHE = [
@@ -46,7 +46,7 @@ self.addEventListener('fetch', function (event) {
     var path = url.pathname;
 
     // never cache dynamic data, media or authentication
-    if (/\/(jobs\/\d+\/(audio|peaks|download)|preview\/|media\/|feed\/|cron|login|logout|jobs\/status)/.test(path) || request.headers.get('range')) {
+    if (/\/(jobs\/\d+\/(audio|peaks|download)|preview\/|media\/|feed\/|cron|login|logout|locale\/|jobs\/status)/.test(path) || request.headers.get('range')) {
         return;
     }
 
