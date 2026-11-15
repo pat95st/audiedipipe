@@ -465,12 +465,7 @@
         });
     });
 
-    /* ---------- PWA: service worker & offline indicator ---------- */
-    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
-        window.addEventListener('load', function () {
-            navigator.serviceWorker.register(AEP.url('/sw.js'), { scope: AEP.base + '/' }).catch(function () { /* optional */ });
-        });
-    }
+    /* ---------- PWA: offline indicator (service worker & load errors: pwa.js) ---------- */
     var offline = document.getElementById('aepOffline');
     var updateOnline = function () { if (offline) { offline.classList.toggle('d-none', navigator.onLine); } };
     window.addEventListener('online', updateOnline);
