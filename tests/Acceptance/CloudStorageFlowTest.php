@@ -37,7 +37,7 @@ final class CloudStorageFlowTest extends TestCase
         foreach (['dropbox', 'icloud', 'onedrive', 'gdrive', 'box'] as $type) {
             self::assertStringContainsString('<option value="' . $type . '"', $form->body);
         }
-        self::assertStringContainsString('noch nicht eingerichtet', $form->body);
+        self::assertStringContainsString('not set up yet', $form->body);
         self::assertStringContainsString('/settings#cloud', $form->body);
 
         $saved = $kernel->handle(new Request('POST', '/settings', post: [
@@ -57,7 +57,7 @@ final class CloudStorageFlowTest extends TestCase
         $form = $kernel->handle(new Request('GET', '/sources/new'));
         self::assertStringContainsString('<option value="dropbox">Dropbox</option>', $form->body);
         self::assertStringContainsString('<option value="icloud">iCloud Drive</option>', $form->body);
-        self::assertStringContainsString('<option value="gdrive">Google Drive – noch nicht eingerichtet</option>', $form->body);
+        self::assertStringContainsString('<option value="gdrive">Google Drive – not set up yet</option>', $form->body);
 
         // Start the OAuth flow for a saved Dropbox location.
         $id = (int) $app->get(CommandBus::class)->dispatch(new SaveSource(null, 'Dropbox inbox', 'dropbox', [], '/Inbox', [], 300, 'keep', true));
