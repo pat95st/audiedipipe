@@ -90,4 +90,33 @@ final class AuthFlowTest extends TestCase
             'wrong password must not lead to the dashboard',
         );
     }
+
+    public function test_locale_switch_overrides_stored_account_preference(): void
+    {
+        $app = $this->installedApp();
+        $app->get(CommandBus::class)->dispatch(new CreateUser(
+            username: 'admin',
+            email: 'admin@example.org',
+            password: 'super-secret-password',
+            role: 'admin',
+            locale: 'en',
+        ));
+
+        $session = new ArraySession();
+        $session->set('csrf_token', str_repeat('a', 64));
+        $kernel = new HttpKernel($app, $session);
+        $kernel->handle(new Request('POST', '/login', post: [
+            '_csrf' => str_repeat('a', 64),
+            'username' => 'admin',
+            'password' => 'super-secret-password',
+        ]));
+
+        $response = $kernel->handle(new Request('GET', '/locale/de', headers: ['host' => 'example.org', 'referer' => 'https://example.org/jobs?x=1']));
+        self::assertSame(302, $response->status);
+        self::assertSame('/jobs?x=1', $response->headers['Location'] ?? '');
+        self::assertStringContainsString('no-store', $response->headers['Cache-Control'] ?? '');
+
+        $page = $kernel->handle(new Request('GET', '/account'));
+        self::assertStringContainsString('<html lang="de"', $page->body);
+    }
 }
