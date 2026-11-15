@@ -4,7 +4,7 @@
 /** @var list<string> $types */
 /** @var array<string, list<string>> $fields */
 /** @var list<string> $secrets */
-/** @var array{oauth: list<string>, enabled: list<string>, icloud_base: string, can_configure: bool} $cloud */
+/** @var array{oauth: list<string>, enabled: list<string>, unconfigured: list<string>, icloud_base: string, can_configure: bool} $cloud */
 $config = is_array($source['config'] ?? null) ? $source['config'] : [];
 $filter = is_array($source['filter'] ?? null) ? $source['filter'] : [];
 $allFields = [];
@@ -50,11 +50,23 @@ $defaults = ['passive' => true, 'verify_tls' => true];
                     <label class="form-label" for="type"><?= $v->te('sources.type') ?></label>
                     <select class="form-select" id="type" name="type" data-source-type>
                         <?php foreach ($types as $type): ?>
-                            <option value="<?= $v->e($type) ?>"<?= $source['type'] === $type ? ' selected' : '' ?>><?= $v->te('sources.type.' . $type) ?></option>
+                            <option value="<?= $v->e($type) ?>"<?= $source['type'] === $type ? ' selected' : '' ?>><?= $v->te('sources.type.' . $type) ?><?= in_array($type, $cloud['unconfigured'], true) ? ' – ' . $v->te('sources.cloud.not_configured_suffix') : '' ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-12" data-source-field="<?= $v->e(implode(' ', $cloud['oauth'])) ?>">
+                <?php if ($cloud['unconfigured'] !== []): ?>
+                    <div class="col-12" data-source-field="<?= $v->e(implode(' ', $cloud['unconfigured'])) ?>">
+                        <div class="alert alert-warning mb-0">
+                            <i class="bi bi-exclamation-triangle me-1"></i><?= $v->te('sources.cloud.not_configured') ?>
+                            <?php if ($cloud['can_configure']): ?>
+                                <div class="mt-2"><a class="btn btn-sm btn-warning" href="<?= $v->url('/settings#cloud') ?>"><i class="bi bi-gear me-1"></i><?= $v->te('sources.cloud.settings_link') ?></a></div>
+                            <?php else: ?>
+                                <div class="mt-1 small"><?= $v->te('sources.cloud.ask_admin') ?></div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <div class="col-12" data-source-field="<?= $v->e(implode(' ', array_values(array_diff($cloud['oauth'], $cloud['unconfigured'])))) ?>">
                     <div class="border rounded p-3">
                         <?php if ($source['id'] === null || !in_array($source['type'], $cloud['oauth'], true)): ?>
                             <div class="small text-body-secondary"><i class="bi bi-info-circle me-1"></i><?= $v->te('sources.cloud.save_first') ?></div>
