@@ -16,11 +16,9 @@ $jsI18n = array_filter(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title><?= $v->e(($title ?? '') !== '' ? $title . ' · ' . $appName : $appName) ?></title>
-    <meta name="theme-color" content="<?= $v->e($settings['primary_color'] ?? '#e8590c') ?>">
     <meta name="csrf-token" content="<?= $v->e($csrf ?? '') ?>">
     <meta name="base-url" content="<?= $v->e(rtrim($v->url('/'), '/')) ?>">
-    <link rel="manifest" href="<?= $v->url('/manifest.webmanifest') ?>">
-    <link rel="icon" href="<?= $v->asset('img/logo.svg') ?>" type="image/svg+xml">
+<?= $v->partial('partials/pwa_head', ['settings' => $settings]) ?>
     <script src="<?= $v->asset('js/theme.js') ?>"></script>
     <link rel="stylesheet" href="<?= $v->asset('vendor/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= $v->asset('vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">

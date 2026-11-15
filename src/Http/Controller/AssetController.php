@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AudiEdiPipe\Http\Controller;
 
 use AudiEdiPipe\Http\Response;
+use AudiEdiPipe\Infrastructure\Branding\AppIcons;
 use AudiEdiPipe\Infrastructure\I18n\Translator;
 use AudiEdiPipe\Infrastructure\Persistence\SettingsRepository;
 
@@ -17,28 +18,87 @@ final class AssetController extends Controller
     {
         $settings = $this->app->get(SettingsRepository::class);
         $name = $settings->string('app_name') ?: 'audiEdiPipe';
+        $icons = $this->appIcons();
         $manifest = [
+            'id' => $this->view->url('/'),
             'name' => $name,
             'short_name' => mb_substr($name, 0, 12),
-            'description' => 'Pipeline based audio editor',
+            'description' => $this->view->t('app.tagline'),
             'start_url' => $this->view->url('/'),
             'scope' => $this->view->url('/'),
             'display' => 'standalone',
+            'display_override' => ['window-controls-overlay', 'standalone'],
+            'orientation' => 'any',
             'background_color' => '#111418',
-            'theme_color' => $settings->string('primary_color') ?: '#e8590c',
+            'theme_color' => self::hex($settings->string('primary_color'), '#e8590c'),
             'lang' => $this->view->locale(),
-            'icons' => [
-                ['src' => $this->view->url('assets/img/icon-192.png'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
-                ['src' => $this->view->url('assets/img/icon-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
-                ['src' => $this->view->url('assets/img/icon-maskable-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
-            ],
+            'dir' => 'ltr',
+            'categories' => ['music', 'productivity', 'utilities'],
+            'icons' => $this->manifestIcons($icons),
             'shortcuts' => [
-                ['name' => $this->view->t('nav.upload'), 'url' => $this->view->url('/upload')],
-                ['name' => $this->view->t('nav.jobs'), 'url' => $this->view->url('/jobs')],
+                ['name' => $this->view->t('nav.upload'), 'url' => $this->view->url('/upload'), 'icons' => [['src' => $this->view->url('assets/img/icon-192.png'), 'sizes' => '192x192', 'type' => 'image/png']]],
+                ['name' => $this->view->t('nav.jobs'), 'url' => $this->view->url('/jobs'), 'icons' => [['src' => $this->view->url('assets/img/icon-192.png'), 'sizes' => '192x192', 'type' => 'image/png']]],
             ],
         ];
 
-        return Response::json($manifest)->withHeader('Content-Type', 'application/manifest+json');
+        return Response::text(
+            (string) json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            200,
+            'application/manifest+json; charset=utf-8',
+        )->withHeader('Cache-Control', 'no-cache');
+    }
+
+    /**
+     * App icon rendered from the uploaded logo: /app-icon/192, /512,
+     * /maskable, /apple. Falls back to the bundled icon (redirect).
+     */
+    public function appIcon(): Response
+    {
+        $variant = $this->request->attribute('variant');
+        if (!isset(AppIcons::VARIANTS[$variant])) {
+            return Response::notFound();
+        }
+        $icons = $this->appIcons();
+        $png = $icons->render($variant);
+        if ($png === null) {
+            return Response::redirect($this->view->url(AppIcons::fallback($variant)));
+        }
+        $immutable = ($this->request->query['v'] ?? '') === $icons->version();
+
+        return Response::text($png, 200, 'image/png')
+            ->withHeader('Cache-Control', $immutable ? 'public, max-age=31536000, immutable' : 'no-cache')
+        ;
+    }
+
+    /**
+     * @return list<array<string, string>>
+     */
+    private function manifestIcons(AppIcons $icons): array
+    {
+        if ($icons->hasUsableRasterLogo()) {
+            $v = '?v=' . $icons->version();
+
+            return [
+                ['src' => $this->view->url('/app-icon/192') . $v, 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => $this->view->url('/app-icon/512') . $v, 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => $this->view->url('/app-icon/maskable') . $v, 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+            ];
+        }
+        $default = [
+            ['src' => $this->view->url('assets/img/icon-192.png'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+            ['src' => $this->view->url('assets/img/icon-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+            ['src' => $this->view->url('assets/img/icon-maskable-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+        ];
+        if ($icons->hasSvgLogo()) {
+            array_unshift($default, ['src' => $this->view->url($icons->logo()), 'sizes' => 'any', 'type' => 'image/svg+xml', 'purpose' => 'any']);
+        }
+
+        return $default;
+    }
+
+    private function appIcons(): AppIcons
+    {
+        return new AppIcons($this->app->root . '/public', $this->app->get(SettingsRepository::class)->string('logo'));
     }
 
     public function themeCss(): Response
@@ -68,7 +128,7 @@ final class AssetController extends Controller
 
     public function offline(): Response
     {
-        return Response::html($this->view->render('errors/offline', ['title' => 'Offline'], 'layout_guest'));
+        return Response::html($this->view->render('errors/offline', ['title' => $this->view->t('errors.offline')], 'layout_guest'));
     }
 
     public static function css(string $primary, string $secondary): string

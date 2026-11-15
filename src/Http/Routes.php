@@ -34,6 +34,7 @@ final class Routes
         $r->post('/logout', AuthController::class, 'logout');
         $r->get('/locale/{code}', AuthController::class, 'setLocale', false);
         $r->get('/manifest.webmanifest', AssetController::class, 'manifest', false);
+        $r->get('/app-icon/{variant}', AssetController::class, 'appIcon', false);
         $r->get('/theme.css', AssetController::class, 'themeCss', false);
         $r->get('/i18n/{locale}', AssetController::class, 'translations', false);
         $r->get('/offline', AssetController::class, 'offline', false);

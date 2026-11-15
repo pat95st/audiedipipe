@@ -71,7 +71,9 @@ new file arrives or a job needs review.
 
 ### UI
 - **Bootstrap**-based, responsive, **light & dark mode**
-- Installable **PWA** (web manifest + service worker, offline shell)
+- Installable **PWA** (web manifest + service worker, offline page, app icon
+  from your logo, visible load-error/offline messages) – see
+  [Progressive Web App](#progressive-web-app-pwa)
 - **i18n**: German and English included; add a language by dropping a
   `lang/<code>.json` file in
 - **Branding**: custom instance name, logo and colour scheme
@@ -84,6 +86,44 @@ new file arrives or a job needs review.
 - **PHPStan** (level 8) + **PHP-CS-Fixer** static analysis
 - **PHPUnit** tests split into unit / database / integration / acceptance suites
 - **Automatic installer** (CLI and web) with a system requirements check
+
+## Progressive Web App (PWA)
+
+audiEdiPipe can be installed as an app on desktop, tablet and phone
+("Install app" / "Add to Home Screen"), e.g. to review or cut episodes on a
+tablet.
+
+- **Manifest** – `/manifest.webmanifest` is generated from the settings
+  (instance name, primary colour, language) and offers shortcuts to *Upload*
+  and *Jobs*.
+- **App icon** – if a raster logo (PNG, JPEG, WebP, at least 144 px) is
+  uploaded under *Settings → Branding*, it is also used as app icon:
+  `/app-icon/192`, `/512`, `/maskable` (with safe zone) and `/apple` are
+  rendered from it with GD. An SVG logo is added to the manifest directly
+  (`sizes: any`). Without a logo or without `ext-gd` the bundled icons from
+  `public/assets/img/` are used (replace them with PNGs of the same name and
+  size for a different default icon).
+- **Service worker** (`public/sw.js`) – caches **only** the app shell: static
+  assets (versioned by `?v=` file time, so changes are picked up
+  automatically), app icons/logo, manifest and `theme.css`. Pages are always
+  loaded fresh, because they contain a CSRF token and live data; job status,
+  audio, waveforms, downloads, feeds, uploads and login are never cached.
+  Without a connection the offline page (`/offline`) is shown at the requested
+  URL with *Retry* and reloads automatically once the connection is back.
+  Bump `VERSION` in `sw.js` when you change its precache list or logic.
+- **Load errors** (`public/assets/js/pwa.js`) – the installed app has no
+  browser error page, so failed requests show a message at the bottom of the
+  screen: no connection, server error (≥ 500), expired session (with a
+  *Sign in* button) and a sticky offline hint; forms are not submitted while
+  offline. Own scripts can call `window.AEP_showLoadError(text, {reload: true})`;
+  requests with the header `X-No-Load-Error` are ignored.
+- The PWA head (`templates/partials/pwa_head.php`) and the service worker
+  registration are also included on the login/2FA pages, so the app can be
+  installed before signing in. Installation in a sub directory works, the
+  scope follows the base URL.
+- Installing requires **HTTPS** (`localhost` is exempt). Without a valid
+  certificate the browser does not offer installation – the web UI works
+  normally anyway.
 
 ## Requirements
 

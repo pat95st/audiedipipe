@@ -400,3 +400,24 @@ body.aep-app, body.aep-guest { background: var(--aep-bg); }
     box-shadow: 0 0 8px rgba(var(--bs-primary-rgb), .5);
 }
 .aep-meter-label { font-family: var(--aep-font-mono); font-size: .7rem; color: var(--bs-secondary-color); }
+
+/* ---------- PWA: load error / offline messages (pwa.js) ---------- */
+.aep-le-stack { position: fixed; left: 0; right: 0; bottom: 0; z-index: 2000; display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 0 12px calc(12px + env(safe-area-inset-bottom)); pointer-events: none; }
+.aep-le-toast { pointer-events: auto; display: flex; align-items: flex-start; gap: .75rem; width: 100%; max-width: 32rem; padding: .75rem .875rem; border-radius: .625rem; border: 1px solid #f1aeb5; background: #f8d7da; color: #58151c; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, .3); font-size: .875rem; line-height: 1.35; animation: aep-le-in .18s ease-out; }
+.aep-le-toast.aep-le-warn { border-color: #ffe69c; background: #fff3cd; color: #664d03; }
+[data-bs-theme="dark"] .aep-le-toast { border-color: #842029; background: #2c0b0e; color: #ea868f; }
+[data-bs-theme="dark"] .aep-le-toast.aep-le-warn { border-color: #997404; background: #332701; color: #ffda6a; }
+.aep-le-icon { flex: none; font-size: 1.1rem; line-height: 1.2; }
+.aep-le-text { flex: 1; min-width: 0; }
+.aep-le-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+.aep-le-btn { border: 1px solid currentColor; border-radius: .375rem; background: transparent; color: inherit; padding: .2rem .6rem; font: inherit; font-size: .8125rem; cursor: pointer; text-decoration: none; }
+.aep-le-btn:hover { background: rgba(127, 127, 127, .2); color: inherit; }
+.aep-le-close { flex: none; border: 0; background: transparent; color: inherit; opacity: .7; cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 0 .125rem; }
+.aep-le-close:hover { opacity: 1; }
+@keyframes aep-le-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .aep-le-toast { animation: none; } }
+/* installed app: keep content clear of notches / home indicator */
+@media (display-mode: standalone) {
+  .aep-topbar { padding-top: env(safe-area-inset-top); }
+  .aep-main { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+}
