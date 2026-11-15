@@ -92,6 +92,9 @@ final class Routes
         $r->post('/sources/{id}/delete', SourceController::class, 'delete', true, ['sources.manage']);
         $r->post('/sources/{id}/test', SourceController::class, 'test', true, ['sources.manage']);
         $r->post('/sources/{id}/scan', SourceController::class, 'scan', true, ['sources.manage']);
+        $r->post('/sources/{id}/connect', SourceController::class, 'connect', true, ['sources.manage']);
+        $r->post('/sources/{id}/disconnect', SourceController::class, 'disconnect', true, ['sources.manage']);
+        $r->get('/oauth/callback', SourceController::class, 'oauthCallback', true, ['sources.manage']);
 
         // Metadata templates & effect presets
         $r->get('/templates', TemplateController::class, 'index', true, ['templates.manage']);

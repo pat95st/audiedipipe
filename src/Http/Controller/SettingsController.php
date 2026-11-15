@@ -17,6 +17,7 @@ use AudiEdiPipe\Infrastructure\Mail\Mailer;
 use AudiEdiPipe\Infrastructure\Mail\Message;
 use AudiEdiPipe\Infrastructure\Mail\SmtpMailer;
 use AudiEdiPipe\Infrastructure\Persistence\Database;
+use AudiEdiPipe\Infrastructure\Storage\Cloud\CloudProviders;
 use AudiEdiPipe\Infrastructure\Storage\SftpStorage;
 use AudiEdiPipe\Kernel\App;
 use Throwable;
@@ -35,6 +36,11 @@ final class SettingsController extends Controller
             'title' => $this->view->t('nav.settings'),
             's' => $this->query(new GetSettings()),
             'languages' => $this->app->get(Translator::class)->available(),
+            'cloud' => [
+                'redirect_uri' => $this->app->get(CloudProviders::class)->redirectUri(),
+                'consoles' => CloudProviders::CONSOLES,
+                'icloud_default' => CloudProviders::ICLOUD_MAC_PATH,
+            ],
             'system' => [
                 'version' => App::VERSION,
                 'php' => PHP_VERSION,
@@ -60,13 +66,17 @@ final class SettingsController extends Controller
         if (is_array($this->request->input('smtp'))) {
             $values['smtp'] = $this->request->input('smtp');
         }
+        $cloud = $this->request->input(CloudProviders::SETTINGS_KEY);
+        if (is_array($cloud)) {
+            $values[CloudProviders::SETTINGS_KEY] = $cloud;
+        }
         if ($this->request->bool('remove_logo')) {
             $values['logo'] = '';
         }
         $this->command(new SaveSettings($values));
         $this->flash('success', 'common.saved');
 
-        return $this->redirect('/settings');
+        return $this->redirect(is_array($cloud) ? '/settings#cloud' : '/settings');
     }
 
     public function uploadLogo(): Response

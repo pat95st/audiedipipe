@@ -4,6 +4,7 @@
 /** @var list<string> $types */
 /** @var array<string, list<string>> $fields */
 /** @var list<string> $secrets */
+/** @var array{oauth: list<string>, enabled: list<string>, icloud_base: string, can_configure: bool} $cloud */
 $config = is_array($source['config'] ?? null) ? $source['config'] : [];
 $filter = is_array($source['filter'] ?? null) ? $source['filter'] : [];
 $allFields = [];
@@ -53,6 +54,39 @@ $defaults = ['passive' => true, 'verify_tls' => true];
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div class="col-12" data-source-field="<?= $v->e(implode(' ', $cloud['oauth'])) ?>">
+                    <div class="border rounded p-3">
+                        <?php if ($source['id'] === null || !in_array($source['type'], $cloud['oauth'], true)): ?>
+                            <div class="small text-body-secondary"><i class="bi bi-info-circle me-1"></i><?= $v->te('sources.cloud.save_first') ?></div>
+                        <?php elseif (($config['refresh_token_set'] ?? false) === true): ?>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="aep-led aep-led-green on"></span>
+                                <span><?= $v->te('sources.cloud.connected_as') ?> <strong><?= $v->e(($config['account'] ?? '') !== '' ? $config['account'] : '—') ?></strong></span>
+                                <div class="ms-auto d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-secondary" type="submit" form="cloud-connect-form"><i class="bi bi-arrow-repeat me-1"></i><?= $v->te('sources.cloud.reconnect') ?></button>
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" form="cloud-disconnect-form"><i class="bi bi-x-lg me-1"></i><?= $v->te('sources.cloud.disconnect') ?></button>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="aep-led aep-led-amber on"></span>
+                                <span><?= $v->te('sources.cloud.not_connected') ?></span>
+                                <button class="btn btn-sm btn-primary ms-auto" type="submit" form="cloud-connect-form"><i class="bi bi-link-45deg me-1"></i><?= $v->te('sources.cloud.connect') ?></button>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="col-12" data-source-field="icloud">
+                    <div class="small text-body-secondary border rounded p-3">
+                        <i class="bi bi-apple me-1"></i><?= $v->te('sources.cloud.icloud_hint') ?>
+                        <div class="font-monospace mt-1"><?= $v->e($cloud['icloud_base']) ?></div>
+                    </div>
+                </div>
+                <?php if ($cloud['can_configure']): ?>
+                    <div class="col-12 small" data-source-field="<?= $v->e(implode(' ', array_merge($cloud['oauth'], ['icloud']))) ?>">
+                        <a href="<?= $v->url('/settings#cloud') ?>"><i class="bi bi-gear me-1"></i><?= $v->te('sources.cloud.settings_link') ?></a>
+                    </div>
+                <?php endif; ?>
                 <?php foreach ($allFields as $field => $usedBy): $value = $config[$field] ?? ($defaults[$field] ?? ''); ?>
                     <div class="<?= in_array($field, $textareaFields, true) || $field === 'url' ? 'col-12' : 'col-md-6' ?>" data-source-field="<?= $v->e(implode(' ', $usedBy)) ?>">
                         <?php if (in_array($field, $checkboxFields, true)): ?>
@@ -163,3 +197,7 @@ $defaults = ['passive' => true, 'verify_tls' => true];
         <button class="btn btn-primary" type="submit"><i class="bi bi-floppy me-1"></i><?= $v->te('common.save') ?></button>
     </div>
 </form>
+<?php if ($source['id'] !== null && in_array($source['type'], $cloud['oauth'], true)): ?>
+    <form method="post" action="<?= $v->url('/sources/' . $source['id'] . '/connect') ?>" id="cloud-connect-form" class="d-none"><?= $v->csrfField() ?></form>
+    <form method="post" action="<?= $v->url('/sources/' . $source['id'] . '/disconnect') ?>" id="cloud-disconnect-form" class="d-none" data-confirm="<?= $v->te('sources.cloud.disconnect_confirm') ?>"><?= $v->csrfField() ?></form>
+<?php endif; ?>

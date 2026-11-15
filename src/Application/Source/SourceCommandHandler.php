@@ -10,13 +10,17 @@ use AudiEdiPipe\Application\ValidationException;
 use AudiEdiPipe\Cqrs\HandlerProvider;
 use AudiEdiPipe\Infrastructure\Persistence\Database;
 use AudiEdiPipe\Infrastructure\Security\Crypto;
+use AudiEdiPipe\Infrastructure\Storage\Cloud\CloudProviders;
 use AudiEdiPipe\Infrastructure\Storage\StorageFactory;
 use AudiEdiPipe\Infrastructure\Support\Json;
 
 final class SourceCommandHandler implements HandlerProvider
 {
-    public function __construct(private readonly Database $db, private readonly Crypto $crypto)
-    {
+    public function __construct(
+        private readonly Database $db,
+        private readonly Crypto $crypto,
+        private readonly ?CloudProviders $cloud = null,
+    ) {
     }
 
     public static function handledMessages(): array
@@ -37,20 +41,33 @@ final class SourceCommandHandler implements HandlerProvider
         }
         $config = [];
         foreach ($command->config as $key => $value) {
-            if (is_string($key) && is_scalar($value)) {
+            if (is_string($key) && is_scalar($value) && !in_array($key, StorageFactory::TOKEN_FIELDS, true)) {
                 $config[$key] = trim((string) $value);
             }
         }
+        $existing = $command->id !== null ? $this->db->fetchOne('SELECT type, config FROM sources WHERE id = ?', [$command->id]) : null;
+        if ($command->id !== null && $existing === null) {
+            throw new ValidationException('sources.error.not_found');
+        }
+        $typeUnchanged = $existing !== null && (string) $existing['type'] === $command->type;
+        // Cloud providers must be enabled under Settings > Cloud storage (existing locations keep working).
+        if (in_array($command->type, CloudProviders::TYPES, true) && !$typeUnchanged && $this->cloud?->enabled($command->type) !== true) {
+            throw new ValidationException('sources.error.provider_disabled');
+        }
         // Empty secret fields on update mean "keep the stored secret".
-        if ($command->id !== null) {
-            $existing = $this->db->fetchOne('SELECT config FROM sources WHERE id = ?', [$command->id]);
-            if ($existing === null) {
-                throw new ValidationException('sources.error.not_found');
-            }
+        if ($existing !== null) {
             $old = Json::decode($existing['config']);
             foreach (StorageFactory::SECRET_FIELDS as $secret) {
-                if (($config[$secret] ?? '') === '' && isset($old[$secret])) {
+                if (!in_array($secret, StorageFactory::TOKEN_FIELDS, true) && ($config[$secret] ?? '') === '' && isset($old[$secret])) {
                     $config[$secret] = $old[$secret];
+                }
+            }
+            // The connected cloud account stays connected unless the type changes.
+            if ($typeUnchanged) {
+                foreach (StorageFactory::TOKEN_FIELDS as $field) {
+                    if (isset($old[$field])) {
+                        $config[$field] = $old[$field];
+                    }
                 }
             }
         }

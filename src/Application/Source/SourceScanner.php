@@ -67,7 +67,7 @@ final class SourceScanner
             if ($pipelines === []) {
                 throw new RuntimeException('No enabled pipeline uses this source.');
             }
-            $adapter = $this->connections->fromConfig((string) $source['type'], Json::decode($source['config']));
+            $adapter = $this->connections->fromConfig((string) $source['type'], Json::decode($source['config']), $sourceId);
             $filterConfig = Json::decode($source['filter']);
             $filter = new FileFilter($filterConfig);
             $files = $adapter->listFiles((string) $source['path'], ($filterConfig['recursive'] ?? false) === true);

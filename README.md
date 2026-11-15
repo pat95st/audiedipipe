@@ -30,8 +30,29 @@ Ordered stages, configured per pipeline in the web UI:
 
 ### Sources (storage watchers)
 Automatic scanning of: **local folder, WebDAV, Nextcloud, FTP, SFTP, SCP,
-Samba/CIFS**. Per-source filtering by filename glob, regex, extension, size and
-minimum age. You can also upload a file manually in the UI to test a pipeline.
+Samba/CIFS** and the cloud services **Dropbox, iCloud Drive, OneDrive, Google
+Drive and Box**. Per-source filtering by filename glob, regex, extension, size
+and minimum age. You can also upload a file manually in the UI to test a pipeline.
+Every source can also be used as an export destination.
+
+### Cloud storage
+Cloud services are enabled and configured under **Settings → Cloud storage**;
+only enabled services are offered as storage type.
+
+- **Dropbox, OneDrive, Google Drive, Box**: register your own OAuth app with
+  the provider once (links to the developer consoles are in the settings),
+  register the redirect URI shown there (`<app.url>/oauth/callback`) and enter
+  the client ID/secret. Then create a storage location and click **Connect
+  account**. Tokens are stored encrypted and refreshed automatically (rotating
+  refresh tokens of Box/Microsoft are saved on every refresh).
+  Required permissions: Dropbox `files.metadata.read`, `files.content.read`,
+  `files.content.write`; Microsoft Graph (delegated) `Files.ReadWrite.All`,
+  `User.Read`, `offline_access`; Google `drive`; Box "Read and write all files
+  and folders".
+- **iCloud Drive**: Apple offers no public iCloud Drive API for servers, so the
+  locally synchronised iCloud Drive folder is used (macOS:
+  `~/Library/Mobile Documents/com~apple~CloudDocs`, or iCloud for Windows). Set
+  the folder to "Keep Downloaded" so the files are not just placeholders.
 
 ### Publishing
 Podcast platform upload after processing: **Buzzsprout, Podbean, Spreaker** and

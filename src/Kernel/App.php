@@ -22,6 +22,7 @@ use AudiEdiPipe\Application\Preview\PreviewService;
 use AudiEdiPipe\Application\Publish\PublishTargetHandler;
 use AudiEdiPipe\Application\Settings\SettingsHandler;
 use AudiEdiPipe\Application\Source\SourceCommandHandler;
+use AudiEdiPipe\Application\Source\SourceConnectionHandler;
 use AudiEdiPipe\Application\Source\SourceQueryHandler;
 use AudiEdiPipe\Application\Source\SourceScanner;
 use AudiEdiPipe\Application\Template\TemplateHandler;
@@ -47,6 +48,7 @@ use AudiEdiPipe\Infrastructure\Persistence\SettingsRepository;
 use AudiEdiPipe\Infrastructure\Process\ProcessRunner;
 use AudiEdiPipe\Infrastructure\Publishing\PublisherFactory;
 use AudiEdiPipe\Infrastructure\Security\Crypto;
+use AudiEdiPipe\Infrastructure\Storage\Cloud\CloudProviders;
 use AudiEdiPipe\Infrastructure\Storage\StorageConnections;
 use AudiEdiPipe\Infrastructure\Storage\StorageFactory;
 
@@ -67,6 +69,7 @@ final class App
         JobQueryHandler::class,
         SourceCommandHandler::class,
         SourceQueryHandler::class,
+        SourceConnectionHandler::class,
         TemplateHandler::class,
         PublishTargetHandler::class,
         SettingsHandler::class,
@@ -157,10 +160,17 @@ final class App
             $c->get(Notifier::class),
             $c->get(Translator::class),
         ));
+        $c->set(CloudProviders::class, fn (Container $c): CloudProviders => new CloudProviders(
+            $c->get(HttpClient::class),
+            $c->get(SettingsRepository::class),
+            $c->get(Crypto::class),
+            $this->url(),
+        ));
         $c->set(StorageFactory::class, fn (Container $c): StorageFactory => new StorageFactory(
             $c->get(HttpClient::class),
             $c->get(ProcessRunner::class),
             $this->config->string('paths.smbclient', 'smbclient'),
+            $c->get(CloudProviders::class),
         ));
         $c->set(StorageConnections::class, static fn (Container $c): StorageConnections => new StorageConnections(
             $c->get(Database::class),
@@ -188,7 +198,8 @@ final class App
         $c->set(PipelineQueryHandler::class, static fn (Container $c): PipelineQueryHandler => new PipelineQueryHandler($c->get(Database::class)));
         $c->set(JobCommandHandler::class, fn (Container $c): JobCommandHandler => new JobCommandHandler($c->get(Database::class), $this->storagePath('work'), $c->get(Notifier::class)));
         $c->set(JobQueryHandler::class, static fn (Container $c): JobQueryHandler => new JobQueryHandler($c->get(Database::class)));
-        $c->set(SourceCommandHandler::class, static fn (Container $c): SourceCommandHandler => new SourceCommandHandler($c->get(Database::class), $c->get(Crypto::class)));
+        $c->set(SourceCommandHandler::class, static fn (Container $c): SourceCommandHandler => new SourceCommandHandler($c->get(Database::class), $c->get(Crypto::class), $c->get(CloudProviders::class)));
+        $c->set(SourceConnectionHandler::class, static fn (Container $c): SourceConnectionHandler => new SourceConnectionHandler($c->get(Database::class), $c->get(StorageConnections::class), $c->get(CloudProviders::class)));
         $c->set(SourceQueryHandler::class, static fn (Container $c): SourceQueryHandler => new SourceQueryHandler($c->get(Database::class), $c->get(Crypto::class)));
         $c->set(TemplateHandler::class, static fn (Container $c): TemplateHandler => new TemplateHandler($c->get(Database::class), $c->get(EffectRegistry::class)));
         $c->set(PublishTargetHandler::class, static fn (Container $c): PublishTargetHandler => new PublishTargetHandler($c->get(Database::class), $c->get(Crypto::class)));

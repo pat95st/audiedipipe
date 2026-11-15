@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AudiEdiPipe\Infrastructure\Persistence;
 
+use AudiEdiPipe\Infrastructure\Storage\Cloud\CloudProviders;
 use PDOException;
 
 /**
@@ -29,6 +30,7 @@ final class SettingsRepository
         ],
         'upload_max_mb' => 1024,
         'keep_work_files_days' => 14,
+        CloudProviders::SETTINGS_KEY => CloudProviders::DEFAULTS,
     ];
 
     /** @var array<string, mixed>|null */

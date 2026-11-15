@@ -3,7 +3,10 @@
 /** @var array<string, mixed> $s */
 /** @var array<string, string> $languages */
 /** @var array<string, mixed> $system */
+/** @var array{redirect_uri: string, consoles: array<string, string>, icloud_default: string} $cloud */
 $smtp = is_array($s['smtp'] ?? null) ? $s['smtp'] : [];
+$cloudSettings = is_array($s['cloud_storage'] ?? null) ? $s['cloud_storage'] : [];
+$cloudIcons = ['dropbox' => 'bi-dropbox', 'icloud' => 'bi-apple', 'onedrive' => 'bi-microsoft', 'gdrive' => 'bi-google', 'box' => 'bi-box-seam'];
 ?>
 <div class="aep-page-header">
     <div>
@@ -16,6 +19,7 @@ $smtp = is_array($s['smtp'] ?? null) ? $s['smtp'] : [];
     <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab"><i class="bi bi-sliders me-1"></i><?= $v->te('settings.general') ?></button></li>
     <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#branding" type="button" role="tab"><i class="bi bi-palette me-1"></i><?= $v->te('settings.branding') ?></button></li>
     <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mail" type="button" role="tab"><i class="bi bi-envelope me-1"></i><?= $v->te('settings.mail') ?></button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cloud" type="button" role="tab"><i class="bi bi-cloud me-1"></i><?= $v->te('settings.cloud') ?></button></li>
     <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab"><i class="bi bi-cpu me-1"></i><?= $v->te('settings.system') ?></button></li>
 </ul>
 
@@ -174,6 +178,66 @@ $smtp = is_array($s['smtp'] ?? null) ? $s['smtp'] : [];
                 </form>
             </div>
         </div>
+    </div>
+
+    <div class="tab-pane fade" id="cloud" role="tabpanel">
+        <form method="post" action="<?= $v->url('/settings') ?>" autocomplete="off">
+            <?= $v->csrfField() ?>
+            <div class="aep-panel mb-3">
+                <div class="aep-panel-title"><i class="bi bi-cloud me-2"></i><?= $v->te('settings.cloud') ?></div>
+                <p class="small text-body-secondary mb-2"><?= $v->te('settings.cloud_hint') ?></p>
+                <label class="form-label small" for="cloud_redirect"><?= $v->te('settings.cloud_redirect_uri') ?></label>
+                <div class="input-group input-group-sm" style="max-width: 40rem">
+                    <input class="form-control font-monospace" id="cloud_redirect" value="<?= $v->e($cloud['redirect_uri']) ?>" readonly>
+                    <button class="btn btn-outline-secondary" type="button" data-copy="<?= $v->e($cloud['redirect_uri']) ?>" aria-label="<?= $v->te('common.copy') ?>"><i class="bi bi-clipboard"></i></button>
+                </div>
+                <div class="form-text"><?= $v->te('settings.cloud_redirect_hint') ?></div>
+            </div>
+            <div class="row g-3">
+                <?php foreach (['dropbox', 'onedrive', 'gdrive', 'box', 'icloud'] as $type): $p = is_array($cloudSettings[$type] ?? null) ? $cloudSettings[$type] : []; $field = 'cloud_storage[' . $type . ']'; ?>
+                    <div class="col-lg-6">
+                        <div class="aep-panel h-100">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="aep-panel-title mb-0"><i class="bi <?= $cloudIcons[$type] ?> me-2"></i><?= $v->te('sources.type.' . $type) ?></div>
+                                <input type="hidden" name="<?= $field ?>[enabled]" value="0">
+                                <div class="form-check form-switch ms-auto mb-0">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="cloud-<?= $type ?>-enabled" name="<?= $field ?>[enabled]" value="1"<?= ($p['enabled'] ?? false) === true ? ' checked' : '' ?>>
+                                    <label class="form-check-label" for="cloud-<?= $type ?>-enabled"><?= $v->te('settings.cloud_enabled') ?></label>
+                                </div>
+                            </div>
+                            <p class="small text-body-secondary"><?= $v->te('settings.cloud_help.' . $type) ?></p>
+                            <div class="row g-2">
+                                <?php if ($type === 'icloud'): ?>
+                                    <div class="col-12">
+                                        <label class="form-label small" for="cloud-icloud-path"><?= $v->te('settings.cloud_base_path') ?></label>
+                                        <input class="form-control form-control-sm font-monospace" id="cloud-icloud-path" name="<?= $field ?>[base_path]" value="<?= $v->e($p['base_path'] ?? '') ?>" placeholder="<?= $v->e($cloud['icloud_default']) ?>">
+                                    </div>
+                                <?php else: ?>
+                                    <div class="col-md-6">
+                                        <label class="form-label small" for="cloud-<?= $type ?>-id"><?= $v->te('settings.cloud_client_id.' . $type) ?></label>
+                                        <input class="form-control form-control-sm font-monospace" id="cloud-<?= $type ?>-id" name="<?= $field ?>[client_id]" value="<?= $v->e($p['client_id'] ?? '') ?>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small" for="cloud-<?= $type ?>-secret"><?= $v->te('settings.cloud_client_secret.' . $type) ?></label>
+                                        <input class="form-control form-control-sm" type="password" id="cloud-<?= $type ?>-secret" name="<?= $field ?>[client_secret]" autocomplete="new-password" placeholder="<?= ($p['client_secret_set'] ?? false) ? $v->te('common.unchanged') : '' ?>">
+                                    </div>
+                                    <?php if ($type === 'onedrive'): ?>
+                                        <div class="col-md-6">
+                                            <label class="form-label small" for="cloud-onedrive-tenant"><?= $v->te('settings.cloud_tenant') ?></label>
+                                            <input class="form-control form-control-sm font-monospace" id="cloud-onedrive-tenant" name="<?= $field ?>[tenant]" value="<?= $v->e($p['tenant'] ?? 'common') ?>" placeholder="common">
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="col-12 small">
+                                        <a href="<?= $v->e($cloud['consoles'][$type] ?? '#') ?>" target="_blank" rel="noopener noreferrer"><i class="bi bi-box-arrow-up-right me-1"></i><?= $v->te('settings.cloud_console') ?></a>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                <div class="col-12 text-end"><button class="btn btn-primary"><i class="bi bi-floppy me-1"></i><?= $v->te('common.save') ?></button></div>
+            </div>
+        </form>
     </div>
 
     <div class="tab-pane fade" id="system" role="tabpanel">
