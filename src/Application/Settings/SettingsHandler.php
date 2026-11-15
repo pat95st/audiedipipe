@@ -10,6 +10,7 @@ use AudiEdiPipe\Application\ValidationException;
 use AudiEdiPipe\Cqrs\HandlerProvider;
 use AudiEdiPipe\Infrastructure\Persistence\SettingsRepository;
 use AudiEdiPipe\Infrastructure\Security\Crypto;
+use AudiEdiPipe\Infrastructure\Storage\Cloud\CloudProviders;
 
 final class SettingsHandler implements HandlerProvider
 {
@@ -34,6 +35,7 @@ final class SettingsHandler implements HandlerProvider
             $value = match ($name) {
                 'primary_color', 'secondary_color' => self::color($value),
                 'smtp' => $this->smtp(is_array($value) ? $value : []),
+                CloudProviders::SETTINGS_KEY => CloudProviders::sanitize(is_array($value) ? $value : [], $this->arraySetting($name), $this->crypto),
                 'upload_max_mb', 'keep_work_files_days' => max(1, (int) (is_numeric($value) ? $value : 1)),
                 'default_theme' => in_array($value, ['auto', 'light', 'dark'], true) ? $value : 'auto',
                 default => is_scalar($value) ? mb_substr(trim((string) $value), 0, 500) : '',
@@ -53,7 +55,28 @@ final class SettingsHandler implements HandlerProvider
         $smtp['password'] = '';
         $all['smtp'] = $smtp;
 
+        $cloud = [];
+        foreach (CloudProviders::DEFAULTS as $type => $defaults) {
+            $provider = (is_array($all[CloudProviders::SETTINGS_KEY][$type] ?? null) ? $all[CloudProviders::SETTINGS_KEY][$type] : []) + $defaults;
+            if (array_key_exists('client_secret', $defaults)) {
+                $provider['client_secret_set'] = ($provider['client_secret'] ?? '') !== '';
+                $provider['client_secret'] = '';
+            }
+            $cloud[$type] = $provider;
+        }
+        $all[CloudProviders::SETTINGS_KEY] = $cloud;
+
         return $all;
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private function arraySetting(string $name): array
+    {
+        $value = $this->settings->get($name);
+
+        return is_array($value) ? $value : [];
     }
 
     private static function color(mixed $value): string

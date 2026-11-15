@@ -1,7 +1,7 @@
 <?php
 /** @var \AudiEdiPipe\Http\View $v */
 /** @var list<array<string, mixed>> $sources */
-$icons = ['local' => 'bi-folder2', 'ftp' => 'bi-hdd-rack', 'sftp' => 'bi-shield-lock', 'scp' => 'bi-terminal', 'webdav' => 'bi-globe2', 'nextcloud' => 'bi-cloud', 'smb' => 'bi-pc-display'];
+$icons = ['local' => 'bi-folder2', 'ftp' => 'bi-hdd-rack', 'sftp' => 'bi-shield-lock', 'scp' => 'bi-terminal', 'webdav' => 'bi-globe2', 'nextcloud' => 'bi-cloud', 'smb' => 'bi-pc-display', 'dropbox' => 'bi-dropbox', 'icloud' => 'bi-apple', 'onedrive' => 'bi-microsoft', 'gdrive' => 'bi-google', 'box' => 'bi-box-seam'];
 ?>
 <div class="aep-page-header">
     <div>
