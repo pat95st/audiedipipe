@@ -9,20 +9,25 @@ $o = static fn (string $key, string $default = '') => $v->e($old[$key] ?? $defau
     <div class="alert alert-danger"><strong><?= $v->te('install.failed') ?></strong><br><?= $v->e($error) ?></div>
 <?php endif; ?>
 
-<h2 class="h6 text-uppercase text-body-secondary mt-4"><?= $v->te('install.requirements') ?></h2>
-<ul class="list-group mb-2 aep-checklist" id="aep-install-checks" data-check-url="<?= $v->url('/install/check') ?>" aria-live="polite">
-    <?= $v->partial('install/_checks', ['checks' => $checks]) ?>
-</ul>
-<div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-outline-secondary btn-sm" type="button" id="aep-install-recheck">
-        <span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
-        <i class="bi bi-arrow-repeat me-1"></i><?= $v->te('install.recheck') ?>
-    </button>
-</div>
-
-<form method="post" action="<?= $v->url('/install') ?>" class="vstack gap-4">
+<form method="post" action="<?= $v->url('/install') ?>" class="aep-install-grid">
     <?= $v->csrfField() ?>
-    <fieldset>
+    <div class="aep-install-col">
+    <section class="aep-install-card aep-install-checks">
+        <h2 class="h6 text-uppercase text-body-secondary"><?= $v->te('install.requirements') ?></h2>
+        <ul class="list-group mb-2 aep-checklist" id="aep-install-checks" data-check-url="<?= $v->url('/install/check') ?>" aria-live="polite">
+            <?= $v->partial('install/_checks', ['checks' => $checks]) ?>
+        </ul>
+        <div class="d-flex justify-content-end">
+            <button class="btn btn-outline-secondary btn-sm" type="button" id="aep-install-recheck">
+                <span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+                <i class="bi bi-arrow-repeat me-1"></i><?= $v->te('install.recheck') ?>
+            </button>
+        </div>
+    </section>
+    </div>
+
+    <div class="aep-install-col aep-install-main">
+    <fieldset class="aep-install-card aep-install-app">
         <legend class="h6 text-uppercase text-body-secondary"><?= $v->te('install.application') ?></legend>
         <div class="row g-3">
             <div class="col-md-6">
@@ -60,23 +65,24 @@ $o = static fn (string $key, string $default = '') => $v->e($old[$key] ?? $defau
         </div>
     </fieldset>
 
-    <fieldset>
+    <div class="aep-install-col">
+    <fieldset class="aep-install-card aep-install-db">
         <legend class="h6 text-uppercase text-body-secondary"><?= $v->te('install.database') ?></legend>
         <div class="row g-3">
-            <div class="col-md-4">
+            <div class="col-8">
                 <label class="form-label" for="db_driver"><?= $v->te('install.db_driver') ?></label>
                 <select class="form-select" id="db_driver" name="db_driver">
                     <option value="mysql"<?= ($old['db_driver'] ?? '') === 'mysql' ? ' selected' : '' ?><?= in_array('mysql', $drivers, true) ? '' : ' disabled' ?>>MariaDB / MySQL</option>
                     <option value="pgsql"<?= ($old['db_driver'] ?? '') === 'pgsql' ? ' selected' : '' ?><?= in_array('pgsql', $drivers, true) ? '' : ' disabled' ?>>PostgreSQL</option>
                 </select>
             </div>
-            <div class="col-md-5">
-                <label class="form-label" for="db_host"><?= $v->te('install.db_host') ?></label>
-                <input class="form-control" id="db_host" name="db_host" value="<?= $o('db_host', 'localhost') ?>" required>
-            </div>
-            <div class="col-md-3">
+            <div class="col-4">
                 <label class="form-label" for="db_port"><?= $v->te('install.db_port') ?></label>
                 <input class="form-control" id="db_port" name="db_port" type="number" value="<?= $o('db_port', '3306') ?>" required>
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="db_host"><?= $v->te('install.db_host') ?></label>
+                <input class="form-control" id="db_host" name="db_host" value="<?= $o('db_host', 'localhost') ?>" required>
             </div>
             <div class="col-md-4">
                 <label class="form-label" for="db_name"><?= $v->te('install.db_name') ?></label>
@@ -93,7 +99,7 @@ $o = static fn (string $key, string $default = '') => $v->e($old[$key] ?? $defau
         </div>
     </fieldset>
 
-    <fieldset>
+    <fieldset class="aep-install-card aep-install-admin">
         <legend class="h6 text-uppercase text-body-secondary"><?= $v->te('install.admin') ?></legend>
         <div class="row g-3">
             <div class="col-md-6">
@@ -115,9 +121,13 @@ $o = static fn (string $key, string $default = '') => $v->e($old[$key] ?? $defau
         </div>
     </fieldset>
 
-    <button class="btn btn-primary btn-lg" type="submit" id="aep-install-submit"<?= $ok ? '' : ' disabled' ?>>
-        <i class="bi bi-rocket-takeoff me-1"></i><?= $v->te('install.submit') ?>
-    </button>
-    <div class="alert alert-warning mb-0<?= $ok ? ' d-none' : '' ?>" id="aep-install-warning"><?= $v->te('install.fix_requirements') ?></div>
+    <div class="aep-install-submit vstack gap-3">
+        <div class="alert alert-warning mb-0<?= $ok ? ' d-none' : '' ?>" id="aep-install-warning"><?= $v->te('install.fix_requirements') ?></div>
+        <button class="btn btn-primary btn-lg" type="submit" id="aep-install-submit"<?= $ok ? '' : ' disabled' ?>>
+            <i class="bi bi-rocket-takeoff me-1"></i><?= $v->te('install.submit') ?>
+        </button>
+    </div>
+    </div>
+    </div>
 </form>
 <script src="<?= $v->asset('js/install.js') ?>"></script>
