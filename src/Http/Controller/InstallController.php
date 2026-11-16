@@ -30,6 +30,7 @@ final class InstallController extends Controller
 
         return Response::html($this->view->render('install/index', [
             'title' => $this->view->t('install.title'),
+            'cardClass' => 'aep-guest-card-install',
             'checks' => $checks,
             'ok' => Installer::requirementsMet($checks),
             'old' => $old,

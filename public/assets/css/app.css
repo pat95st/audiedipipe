@@ -489,6 +489,21 @@ h6, .h6 { font-weight: 600; letter-spacing: -.008em; }
 .aep-code-input { font-family: var(--aep-font-mono); letter-spacing: .35em; }
 .aep-checklist .list-group-item { background: transparent; }
 
+/* Installer: wide page, sections as individual cards spread over the width */
+.aep-guest-card.aep-guest-card-install { max-width: 100rem; background: transparent; box-shadow: none; padding: 0; border-radius: 0; }
+.aep-install-grid, .aep-install-col { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.aep-install-card { min-width: 0; margin: 0; background: var(--aep-surface); border: 0; border-radius: 1.25rem; padding: 1.5rem; box-shadow: var(--aep-shadow-float); }
+.aep-install-card > legend { float: left; width: 100%; margin-bottom: 1rem; }
+.aep-install-card > legend + * { clear: both; }
+@media (min-width: 992px) {
+    .aep-install-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+@media (min-width: 1400px) {
+    .aep-install-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+    .aep-install-main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+    .aep-install-checks { position: sticky; top: 1.5rem; }
+}
+
 /* ---------- Misc ---------- */
 .aep-qr { background: #fff; padding: .6rem; border-radius: .5rem; line-height: 0; }
 .aep-qr img, .aep-qr svg { width: 10rem; height: 10rem; }
